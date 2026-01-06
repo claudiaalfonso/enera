@@ -368,6 +368,16 @@ export const useDemoSequence = () => {
         }
       }
 
+      // Update status based on time - ALWAYS, regardless of phrase state
+      // Status persists independently of conversation text
+      let newStatusIndex = 0;
+      for (const trigger of STATUS_TRIGGERS) {
+        if (currentTime >= trigger.time) {
+          newStatusIndex = trigger.statusIndex;
+        }
+      }
+      setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
+
       if (!activePhrase) {
         // Smooth persistence: keep showing last phrase during micro-gaps (up to 800ms)
         const gracePeriod = 0.8;
@@ -390,7 +400,6 @@ export const useDemoSequence = () => {
           nextPhraseStartTime: null,
           state: "hidden"
         });
-        setCurrentStatus("");
         setIsProcessing(false);
         lastPhraseStateRef.current = null;
         rafRef.current = requestAnimationFrame(syncWithAudio);
@@ -455,14 +464,7 @@ export const useDemoSequence = () => {
 
       setIsProcessing(true);
 
-      // Update status based on time (AFTER speech)
-      let newStatusIndex = 0;
-      for (const trigger of STATUS_TRIGGERS) {
-        if (currentTime >= trigger.time) {
-          newStatusIndex = trigger.statusIndex;
-        }
-      }
-      setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
+      // Note: Status is already updated at the top of the sync loop (line 373)
 
       // Update timeline steps
       const newSteps = createInitialSteps();
