@@ -38,30 +38,30 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "2", 
     speaker: "driver", 
-    startTime: 11.5, 
-    endTime: 27.0, 
+    startTime: 11.0, 
+    endTime: 25.5, 
     chunks: [
-      { t: 11.5, text: "Hi, I'm trying to use" },
-      { t: 12.7, text: "the charger at the Church Street car park" },
-      { t: 14.5, text: "in Market Harborough," },
-      { t: 15.7, text: "but I'm not having much luck." },
-      { t: 17.5, text: "I've tried tapping my contactless card" },
-      { t: 19.5, text: "a few times now," },
-      { t: 20.7, text: "and it looks like the screen" },
-      { t: 22.5, text: "isn't changing at all." }
+      { t: 11.0, text: "Hi, I'm trying to use" },
+      { t: 12.2, text: "the charger at the Church Street car park" },
+      { t: 14.0, text: "in Market Harborough," },
+      { t: 15.2, text: "but I'm not having much luck." },
+      { t: 17.0, text: "I've tried tapping my contactless card" },
+      { t: 19.0, text: "a few times now," },
+      { t: 20.2, text: "and it looks like the screen" },
+      { t: 22.0, text: "isn't changing at all." }
     ]
   },
   { 
     id: "3", 
     speaker: "amelia", 
-    startTime: 27.5, 
-    endTime: 36.5, 
+    startTime: 25.6, 
+    endTime: 35.5, 
     chunks: [
-      { t: 27.5, text: "I'm sorry you're having trouble." },
-      { t: 29.2, text: "Let me look into that for you." },
-      { t: 31.0, text: "You're in Market Harborough." },
-      { t: 32.8, text: "Can you just confirm" },
-      { t: 34.0, text: "the charger ID is MH-102-B?" }
+      { t: 25.6, text: "I'm sorry you're having trouble." },
+      { t: 27.3, text: "Let me look into that for you." },
+      { t: 29.1, text: "You're in Market Harborough." },
+      { t: 30.9, text: "Can you just confirm" },
+      { t: 32.1, text: "the charger ID is MH-102-B?" }
     ]
   },
   { 
