@@ -98,12 +98,12 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Compact, centered */}
+      {/* Messages - Compact, centered with better padding */}
       <div
         ref={scrollRef}
         className={cn(
           "flex-1 flex flex-col justify-center items-center",
-          isFullscreen ? "px-6 py-4" : "px-5 py-3"
+          isFullscreen ? "px-8 py-6" : "px-6 py-4"
         )}
       >
         {messages.length === 0 ? (
@@ -129,7 +129,7 @@ const ConversationPanel = ({
             </p>
           </motion.div>
         ) : (
-          <div className="w-full max-w-sm">
+          <div className="w-full max-w-md">
             <AnimatePresence mode="wait" initial={false}>
               {currentMessage && (
                 <motion.div
@@ -180,10 +180,10 @@ const ConversationPanel = ({
                     </motion.span>
                   </motion.div>
 
-                  {/* Message Text with stagger */}
+                  {/* Message Text - NEVER truncate spoken dialogue */}
                   <motion.p 
                     className={cn(
-                      "leading-snug font-medium",
+                      "leading-relaxed font-medium",
                       isFullscreen ? "text-xl" : "text-lg",
                       currentMessage.role === "amelia" 
                         ? "text-right text-foreground" 
@@ -193,10 +193,7 @@ const ConversationPanel = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.08, duration: 0.25 }}
                   >
-                    {currentMessage.content.length > 100 
-                      ? currentMessage.content.slice(0, 100) + "..." 
-                      : currentMessage.content
-                    }
+                    {currentMessage.content}
                   </motion.p>
                 </motion.div>
               )}

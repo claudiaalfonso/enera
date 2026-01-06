@@ -106,9 +106,10 @@ export interface SequenceAction {
 }
 
 // Timestamps matched EXACTLY to audio recording
+// IMPORTANT: First speech starts at ~3s (there's noise before that)
 const SEQUENCE: SequenceAction[] = [
-  // 0s - Amelia intro
-  { messageIndex: 0, statusIndex: 1, stepUpdates: [{ id: "1", status: "active" }], audioTime: 0 },
+  // 3s - Amelia intro (first actual speech, after initial noise)
+  { messageIndex: 0, statusIndex: 1, stepUpdates: [{ id: "1", status: "active" }], audioTime: 3 },
   // 11s - Driver reports issue
   { messageIndex: 1, statusIndex: 2, stepUpdates: [{ id: "1", status: "completed" }, { id: "2", status: "active" }], audioTime: 11 },
   // 25s - Amelia asks for charger ID

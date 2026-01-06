@@ -219,40 +219,43 @@ const Index = () => {
           <DemoHeader isFullscreen={isFullscreen} />
         </motion.div>
 
-        {/* Main Content - Tighter layout */}
-        <main className={cn("flex-1 flex min-h-0 gap-0", !isCompact && "pb-12")}>
-          {/* Left Panel - System View (50%) */}
-          <motion.div
-            className={cn(
-              "border-r border-border/30 bg-card/40 backdrop-blur-sm flex-shrink-0",
-              isFullscreen ? "w-[48%]" : "w-[50%]"
-            )}
-            variants={leftPanelVariants}
-          >
-            <SystemPanel
-              currentStatus={currentStatus}
-              isProcessing={isProcessing}
-              steps={steps}
-              showConfirmation={showConfirmation}
-              isFullscreen={isFullscreen}
-            />
-          </motion.div>
+        {/* Main Content - Compact centered layout */}
+        <main className={cn(
+          "flex-1 flex justify-center items-stretch min-h-0",
+          !isCompact && "pb-12"
+        )}>
+          <div className={cn(
+            "flex w-full",
+            isFullscreen ? "max-w-6xl" : "max-w-5xl",
+            "mx-auto"
+          )}>
+            {/* Left Panel - System View */}
+            <motion.div
+              className="border-r border-border/30 bg-card/40 backdrop-blur-sm w-1/2"
+              variants={leftPanelVariants}
+            >
+              <SystemPanel
+                currentStatus={currentStatus}
+                isProcessing={isProcessing}
+                steps={steps}
+                showConfirmation={showConfirmation}
+                isFullscreen={isFullscreen}
+              />
+            </motion.div>
 
-          {/* Right Panel - Conversation (50%) */}
-          <motion.div
-            className={cn(
-              "bg-enera-surface-elevated/60 backdrop-blur-sm flex-shrink-0",
-              isFullscreen ? "w-[52%]" : "w-[50%]"
-            )}
-            variants={rightPanelVariants}
-          >
-            <ConversationPanel 
-              messages={messages} 
-              isFullscreen={isFullscreen} 
-              audioRef={audioRef}
-              isPlaying={isPlaying}
-            />
-          </motion.div>
+            {/* Right Panel - Conversation */}
+            <motion.div
+              className="bg-enera-surface-elevated/60 backdrop-blur-sm w-1/2"
+              variants={rightPanelVariants}
+            >
+              <ConversationPanel 
+                messages={messages} 
+                isFullscreen={isFullscreen} 
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+              />
+            </motion.div>
+          </div>
         </main>
 
         {/* Presentation Controls */}
