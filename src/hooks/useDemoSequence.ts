@@ -325,6 +325,10 @@ export const useDemoSequence = () => {
     };
   }, []);
 
+  // Track completed messages for persistence between speakers
+  const completedMessagesRef = useRef<Message[]>([]);
+  const lastCompletedMessageRef = useRef<{ id: string; text: string } | null>(null);
+
   // Audio-driven sync loop - phrase-level precision
   useEffect(() => {
     if (!hasStarted || !isPlaying || isComplete) return;
@@ -333,9 +337,13 @@ export const useDemoSequence = () => {
       if (!audioRef.current) return;
 
       const currentTime = audioRef.current.currentTime;
+      
+      // Get first phrase start time dynamically
+      const firstPhraseStart = FLAT_PHRASES[0]?.startTime ?? 5.0;
 
-      // RULE: Before first speech (< 4.5s), show NOTHING (background noise)
-      if (currentTime < 4.5) {
+      // RULE: Before first speech, show NOTHING (background noise)
+      // Use actual first phrase time, not hardcoded value
+      if (currentTime < firstPhraseStart) {
         setCurrentPhrase({
           messageId: null,
           role: null,
@@ -353,23 +361,24 @@ export const useDemoSequence = () => {
         return;
       }
 
-      // Find the currently speaking phrase.
-      // If nobody is speaking (silence/noise), show NOTHING.
+      // Find the currently speaking phrase
       let activePhrase: FlatPhrase | null = null;
+      let lastCompletedPhrase: FlatPhrase | null = null;
+      
       for (const phrase of FLAT_PHRASES) {
-        if (currentTime < phrase.startTime) break;
-
         const estimatedDuration = estimateSpeechDuration(phrase.text, phrase.role);
         const hardEnd = phrase.nextStartTime ?? Infinity;
         const endTime = Math.min(hardEnd, phrase.startTime + estimatedDuration);
 
         if (currentTime >= phrase.startTime && currentTime < endTime) {
           activePhrase = phrase;
+          break;
+        } else if (currentTime >= endTime) {
+          lastCompletedPhrase = phrase;
         }
       }
 
       // Update status based on time - ALWAYS, regardless of phrase state
-      // Status persists independently of conversation text
       let newStatusIndex = 0;
       for (const trigger of STATUS_TRIGGERS) {
         if (currentTime >= trigger.time) {
@@ -379,34 +388,54 @@ export const useDemoSequence = () => {
       setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
 
       if (!activePhrase) {
-        // Smooth persistence: keep showing last phrase during micro-gaps (up to 800ms)
-        const gracePeriod = 0.8;
-        const timeSinceLastPhrase = currentTime - lastPhraseEndTimeRef.current;
+        // NO ACTIVE SPEECH - but maintain last completed message until next speaker
+        // This prevents text from disappearing between utterances
         
-        if (timeSinceLastPhrase < gracePeriod && lastPhraseStateRef.current) {
-          // Keep showing last phrase frozen at 100% progress - don't update state
-          rafRef.current = requestAnimationFrame(syncWithAudio);
-          return;
+        if (lastCompletedPhrase && lastPhraseStateRef.current) {
+          // Keep showing the COMPLETED state of the last phrase
+          const completedMessage = TIMED_TRANSCRIPT.find(m => m.id === lastCompletedPhrase!.messageId);
+          if (completedMessage) {
+            // Show full message text as completed
+            const fullText = completedMessage.phrases.map(p => p.text).join(" ");
+            
+            // Check if we need to update the completed message ref
+            if (!lastCompletedMessageRef.current || lastCompletedMessageRef.current.id !== completedMessage.id) {
+              lastCompletedMessageRef.current = { id: completedMessage.id, text: fullText };
+            }
+            
+            // Show completed state - frozen, no animation
+            setCurrentPhrase({
+              messageId: completedMessage.id,
+              role: completedMessage.role,
+              accumulatedText: fullText,
+              currentPhraseText: "",
+              wordProgress: 1,
+              currentPhraseStartTime: lastCompletedPhrase.startTime,
+              nextPhraseStartTime: null,
+              state: "completed"
+            });
+            setIsProcessing(false);
+          }
+        } else {
+          // Genuine silence at start - hide everything
+          setCurrentPhrase({
+            messageId: null,
+            role: null,
+            accumulatedText: "",
+            currentPhraseText: "",
+            wordProgress: 0,
+            currentPhraseStartTime: 0,
+            nextPhraseStartTime: null,
+            state: "hidden"
+          });
+          setIsProcessing(false);
         }
         
-        // Only clear after grace period (genuine silence)
-        setCurrentPhrase({
-          messageId: null,
-          role: null,
-          accumulatedText: "",
-          currentPhraseText: "",
-          wordProgress: 0,
-          currentPhraseStartTime: 0,
-          nextPhraseStartTime: null,
-          state: "hidden"
-        });
-        setIsProcessing(false);
-        lastPhraseStateRef.current = null;
         rafRef.current = requestAnimationFrame(syncWithAudio);
         return;
       }
 
-      // Build ACCUMULATED text for this message - NEVER shrinks, only grows
+      // ACTIVE SPEECH - Build accumulated text for this message
       const activeMessage = TIMED_TRANSCRIPT.find(m => m.id === activePhrase!.messageId) ?? null;
       const latestPhraseIndex = activePhrase.phraseIndex;
 
@@ -418,10 +447,12 @@ export const useDemoSequence = () => {
       // Current phrase being revealed
       const currentPhraseText = activePhrase.text;
       
-      // Calculate word progress within current phrase
+      // Calculate word progress - FASTER reveal to ensure full visibility
+      // Use 0.7x duration so text is fully revealed before speech ends
       const estimatedDuration = estimateSpeechDuration(activePhrase.text, activePhrase.role);
+      const revealDuration = estimatedDuration * 0.7; // Faster reveal
       const elapsed = currentTime - activePhrase.startTime;
-      const wordProgress = Math.min(1, Math.max(0, elapsed / estimatedDuration));
+      const wordProgress = Math.min(1, Math.max(0, elapsed / revealDuration));
       
       // Accumulated text = all completed phrases joined
       const accumulatedText = completedPhraseTexts.join(" ");
@@ -439,9 +470,8 @@ export const useDemoSequence = () => {
       
       setCurrentPhrase(newPhraseState);
       
-      // Track for smooth persistence
-      const estimatedEnd = activePhrase.startTime + estimatedDuration;
-      lastPhraseEndTimeRef.current = estimatedEnd;
+      // Track for persistence
+      lastPhraseEndTimeRef.current = activePhrase.startTime + estimatedDuration;
       lastPhraseStateRef.current = newPhraseState;
 
       // Build completed messages (all messages before current)
