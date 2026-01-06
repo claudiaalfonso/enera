@@ -2,199 +2,77 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Message } from "@/components/demo/ChatMessage";
 import { TimelineStep } from "@/components/demo/TimelineItem";
 
-// Phrase segments with exact timestamps for kinetic captions
-// Each phrase is timed to appear exactly when spoken
-export interface PhraseSegment {
-  text: string;
-  startTime: number; // When this phrase starts in audio
-}
+// ============================================================
+// DETERMINISTIC CUE SHEET - Audio timestamps are the ONLY truth
+// ============================================================
 
-export interface TimedMessage {
+export interface Cue {
   id: string;
-  role: "driver" | "amelia";
-  phrases: PhraseSegment[];
+  speaker: "driver" | "amelia";
+  startTime: number;  // When speech begins (seconds)
+  endTime: number;    // When speech ends (seconds)
+  text: string;
 }
 
-// Phrase-level transcript with exact audio timestamps
-// Fine-tuned for precise voice sync - text appears WITH the spoken word
-const TIMED_TRANSCRIPT: TimedMessage[] = [
-  {
-    id: "1",
-    role: "amelia",
-    phrases: [
-      { text: "Hello, my name is Amelia,", startTime: 6.3 },
-      { text: "and I'm with Enera Support.", startTime: 8.5 },
-      { text: "How can I help you today?", startTime: 10.7 },
-    ]
-  },
-  {
-    id: "2",
-    role: "driver",
-    phrases: [
-      { text: "Hi, I'm trying to use the charger", startTime: 13.0 },
-      { text: "at the Church Street car park", startTime: 15.5 },
-      { text: "in Market Harborough,", startTime: 17.7 },
-      { text: "but I'm not having much luck.", startTime: 19.5 },
-      { text: "I've tried tapping my contactless card", startTime: 21.5 },
-      { text: "a few times now,", startTime: 23.7 },
-      { text: "and it looks like the screen isn't changing at all.", startTime: 25.0 },
-    ]
-  },
-  {
-    id: "3",
-    role: "amelia",
-    phrases: [
-      { text: "I'm sorry you're having trouble.", startTime: 27.5 },
-      { text: "Let me look into that for you.", startTime: 29.7 },
-      { text: "You're in Market Harborough.", startTime: 32.0 },
-      { text: "Can you just confirm the charger ID", startTime: 33.5 },
-      { text: "is MH-102-B?", startTime: 35.5 },
-    ]
-  },
-  {
-    id: "4",
-    role: "driver",
-    phrases: [
-      { text: "Yeah, that's the one.", startTime: 37.0 },
-      { text: "MH-102-B.", startTime: 39.0 },
-    ]
-  },
-  {
-    id: "5",
-    role: "amelia",
-    phrases: [
-      { text: "Perfect, thanks.", startTime: 41.5 },
-      { text: "Let me just look into what's happening there.", startTime: 43.0 },
-      { text: "I've just run a diagnostic,", startTime: 46.0 },
-      { text: "and it looks like the card reader module is frozen,", startTime: 48.0 },
-      { text: "although the charger itself is healthy.", startTime: 51.0 },
-      { text: "I'm going to trigger a remote reset", startTime: 53.5 },
-      { text: "on the reader for you now.", startTime: 55.5 },
-      { text: "It should take about 45 seconds", startTime: 57.5 },
-      { text: "to reboot and come back online.", startTime: 59.5 },
-    ]
-  },
-  {
-    id: "6",
-    role: "driver",
-    phrases: [
-      { text: "Great, okay, I'll hang on.", startTime: 61.5 },
-    ]
-  },
-  {
-    id: "7",
-    role: "amelia",
-    phrases: [
-      { text: "While we're waiting for that to cycle,", startTime: 65.5 },
-      { text: "I noticed you're using a guest payment.", startTime: 68.0 },
-      { text: "Did you know that if you used our app,", startTime: 70.5 },
-      { text: "you'd actually get a 35% discount", startTime: 73.0 },
-      { text: "for charging during this off-peak window?", startTime: 75.5 },
-      { text: "It's a fair bit cheaper", startTime: 78.0 },
-      { text: "than the standard contactless rate.", startTime: 79.5 },
-    ]
-  },
-  {
-    id: "8",
-    role: "driver",
-    phrases: [
-      { text: "Oh, interesting.", startTime: 81.5 },
-      { text: "I wasn't aware of that.", startTime: 83.5 },
-      { text: "I will give the app a go next time.", startTime: 85.5 },
-      { text: "Thanks.", startTime: 88.0 },
-    ]
-  },
-  {
-    id: "9",
-    role: "amelia",
-    phrases: [
-      { text: "It's definitely worth it for the savings.", startTime: 89.5 },
-      { text: "Okay, the card reader has finished rebooting", startTime: 92.5 },
-      { text: "and is showing as available again.", startTime: 95.5 },
-      { text: "Could you give your card another tap for me?", startTime: 97.5 },
-      { text: "It should authorize straight away now.", startTime: 100.0 },
-    ]
-  },
-  {
-    id: "10",
-    role: "driver",
-    phrases: [
-      { text: "Yeah, let me try that.", startTime: 102.0 },
-      { text: "Okay, oh yeah, it's worked.", startTime: 104.5 },
-      { text: "It says preparing,", startTime: 107.0 },
-      { text: "and it sounds like the cable's locked,", startTime: 109.0 },
-      { text: "so I think we're good. Thank you.", startTime: 111.0 },
-    ]
-  },
-  {
-    id: "11",
-    role: "amelia",
-    phrases: [
-      { text: "You're very welcome.", startTime: 113.5 },
-      { text: "I can see the session has successfully initialized", startTime: 115.5 },
-      { text: "on my end, too.", startTime: 118.5 },
-      { text: "Is there anything else I can help you with today?", startTime: 120.0 },
-    ]
-  },
-  {
-    id: "12",
-    role: "driver",
-    phrases: [
-      { text: "No, that's it.", startTime: 122.5 },
-      { text: "Thanks for everything.", startTime: 124.5 },
-    ]
-  },
-  {
-    id: "13",
-    role: "amelia",
-    phrases: [
-      { text: "No problem at all.", startTime: 127.5 },
-      { text: "Have a lovely day,", startTime: 129.5 },
-      { text: "and enjoy the rest of your drive.", startTime: 131.5 },
-    ]
-  }
+// Master global offset - adjustable via D-toggle calibration
+// Positive = text appears later, Negative = text appears earlier
+let GLOBAL_OFFSET = 0;
+
+export const getGlobalOffset = () => GLOBAL_OFFSET;
+export const setGlobalOffset = (offset: number) => {
+  GLOBAL_OFFSET = offset;
+};
+
+// CUE SHEET: Exact timestamps for each utterance
+// These are the ONLY source of truth for text display
+const CUE_SHEET: Cue[] = [
+  { id: "1", speaker: "amelia", startTime: 6.3, endTime: 12.0, text: "Hello, my name is Amelia, and I'm with Enera Support. How can I help you today?" },
+  { id: "2", speaker: "driver", startTime: 13.0, endTime: 27.0, text: "Hi, I'm trying to use the charger at the Church Street car park in Market Harborough, but I'm not having much luck. I've tried tapping my contactless card a few times now, and it looks like the screen isn't changing at all." },
+  { id: "3", speaker: "amelia", startTime: 27.5, endTime: 36.5, text: "I'm sorry you're having trouble. Let me look into that for you. You're in Market Harborough. Can you just confirm the charger ID is MH-102-B?" },
+  { id: "4", speaker: "driver", startTime: 37.0, endTime: 40.5, text: "Yeah, that's the one. MH-102-B." },
+  { id: "5", speaker: "amelia", startTime: 41.5, endTime: 61.0, text: "Perfect, thanks. Let me just look into what's happening there. I've just run a diagnostic, and it looks like the card reader module is frozen, although the charger itself is healthy. I'm going to trigger a remote reset on the reader for you now. It should take about 45 seconds to reboot and come back online." },
+  { id: "6", speaker: "driver", startTime: 61.5, endTime: 64.5, text: "Great, okay, I'll hang on." },
+  { id: "7", speaker: "amelia", startTime: 65.5, endTime: 81.0, text: "While we're waiting for that to cycle, I noticed you're using a guest payment. Did you know that if you used our app, you'd actually get a 35% discount for charging during this off-peak window? It's a fair bit cheaper than the standard contactless rate." },
+  { id: "8", speaker: "driver", startTime: 81.5, endTime: 89.0, text: "Oh, interesting. I wasn't aware of that. I will give the app a go next time. Thanks." },
+  { id: "9", speaker: "amelia", startTime: 89.5, endTime: 101.5, text: "It's definitely worth it for the savings. Okay, the card reader has finished rebooting and is showing as available again. Could you give your card another tap for me? It should authorize straight away now." },
+  { id: "10", speaker: "driver", startTime: 102.0, endTime: 113.0, text: "Yeah, let me try that. Okay, oh yeah, it's worked. It says preparing, and it sounds like the cable's locked, so I think we're good. Thank you." },
+  { id: "11", speaker: "amelia", startTime: 113.5, endTime: 122.0, text: "You're very welcome. I can see the session has successfully initialized on my end, too. Is there anything else I can help you with today?" },
+  { id: "12", speaker: "driver", startTime: 122.5, endTime: 126.0, text: "No, that's it. Thanks for everything." },
+  { id: "13", speaker: "amelia", startTime: 127.5, endTime: 134.0, text: "No problem at all. Have a lovely day, and enjoy the rest of your drive." },
 ];
 
-type FlatPhraseBase = {
-  messageId: string;
-  role: "driver" | "amelia";
-  phraseIndex: number;
-  text: string;
-  startTime: number;
-};
+// SYSTEM STATE CUES - tied to audio moments
+interface SystemCue {
+  time: number;
+  status: string;
+}
 
-type FlatPhrase = FlatPhraseBase & {
-  nextStartTime: number | null;
-};
+const SYSTEM_CUES: SystemCue[] = [
+  { time: 12.0, status: "Listening to driver" },
+  { time: 27.0, status: "Understanding the issue" },
+  { time: 30.5, status: "Locating charger station" },
+  { time: 40.0, status: "Charger MH-102-B identified" },
+  { time: 47.0, status: "Running remote diagnostics" },
+  { time: 49.5, status: "Card reader unresponsive" },
+  { time: 56.5, status: "Resetting payment module" },
+  { time: 74.5, status: "Discount offer presented" },
+  { time: 96.5, status: "Charger available again" },
+  { time: 105.5, status: "Charging session confirmed" },
+  { time: 128.5, status: "Issue resolved" },
+];
 
-const FLAT_PHRASES_BASE: FlatPhraseBase[] = TIMED_TRANSCRIPT.flatMap((msg) =>
-  msg.phrases.map((p, phraseIndex) => ({
-    messageId: msg.id,
-    role: msg.role,
-    phraseIndex,
-    text: p.text,
-    startTime: p.startTime,
-  }))
-);
-
-const FLAT_PHRASES: FlatPhrase[] = FLAT_PHRASES_BASE.map((p, idx) => ({
-  ...p,
-  nextStartTime: FLAT_PHRASES_BASE[idx + 1]?.startTime ?? null,
-}));
-
-const estimateSpeechDuration = (text: string, role: "driver" | "amelia") => {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  // Amelia is slightly slower/more deliberate in the recording.
-  const secondsPerWord = role === "amelia" ? 0.31 : 0.28;
-  return Math.min(5, Math.max(0.8, words * secondsPerWord));
-};
-
-// Build flat message array for compatibility
-const CONVERSATION: Message[] = TIMED_TRANSCRIPT.map(tm => ({
-  id: tm.id,
-  role: tm.role,
-  content: tm.phrases.map(p => p.text).join(" ")
-}));
+// TIMELINE STEP TRIGGERS
+const STEP_TRIGGERS: { stepId: string; activateAt: number; completeAt: number }[] = [
+  { stepId: "1", activateAt: 6.3, completeAt: 13.0 },
+  { stepId: "2", activateAt: 13.0, completeAt: 27.5 },
+  { stepId: "3", activateAt: 27.5, completeAt: 37.0 },
+  { stepId: "4", activateAt: 37.0, completeAt: 41.5 },
+  { stepId: "5", activateAt: 46.0, completeAt: 53.5 },
+  { stepId: "6", activateAt: 55.5, completeAt: 65.5 },
+  { stepId: "7", activateAt: 73.0, completeAt: 81.5 },
+  { stepId: "8", activateAt: 95.5, completeAt: 102.0 },
+  { stepId: "9", activateAt: 107.0, completeAt: 136.5 },
+];
 
 const createInitialSteps = (): TimelineStep[] => [
   { id: "1", label: "Call connected", detail: "", status: "pending" },
@@ -208,64 +86,23 @@ const createInitialSteps = (): TimelineStep[] => [
   { id: "9", label: "Session started", detail: "", status: "pending" }
 ];
 
-// Human-readable system states - calm, explanatory, not technical
-const STATUS_MESSAGES = [
-  "", // Empty - nothing during silence
-  "Listening to driver",
-  "Understanding the issue",
-  "Locating charger station",
-  "Charger MH-102-B identified",
-  "Running remote diagnostics",
-  "Card reader unresponsive",
-  "Resetting payment module",
-  "Discount offer presented",
-  "Charger available again",
-  "Charging session confirmed",
-  "Issue resolved"
-];
+// ============================================================
+// CUE STATE - Strict lifecycle: Hidden → Active → Completed
+// ============================================================
 
-// Timeline step triggers - when each step activates (AFTER speech, synced to +1.5s global offset)
-const STEP_TRIGGERS: { stepId: string; activateAt: number; completeAt: number }[] = [
-  { stepId: "1", activateAt: 6.3, completeAt: 13.0 },    // Call connected
-  { stepId: "2", activateAt: 13.0, completeAt: 27.5 },   // Issue reported
-  { stepId: "3", activateAt: 27.5, completeAt: 37.0 },   // Location confirmed
-  { stepId: "4", activateAt: 37.0, completeAt: 41.5 },   // Charger ID verified
-  { stepId: "5", activateAt: 46.0, completeAt: 53.5 },   // Diagnostics run
-  { stepId: "6", activateAt: 55.5, completeAt: 65.5 },   // Reset triggered
-  { stepId: "7", activateAt: 73.0, completeAt: 81.5 },   // Upsell offered
-  { stepId: "8", activateAt: 95.5, completeAt: 102.0 },  // Charger available
-  { stepId: "9", activateAt: 107.0, completeAt: 136.5 }, // Session started
-];
+export type CueLifecycle = "hidden" | "active" | "completed";
 
-// Status update triggers - appear AFTER Amelia references each action (+1.5s global offset)
-const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
-  { statusIndex: 1, time: 12.0 },  // "Listening to driver" - after "How can I help you today?"
-  { statusIndex: 2, time: 27.0 },  // "Understanding the issue" - after driver finishes explaining
-  { statusIndex: 3, time: 30.5 },  // "Locating charger station" - after "Let me look into that"
-  { statusIndex: 4, time: 40.0 },  // "Charger MH-102-B identified" - after driver confirms ID
-  { statusIndex: 5, time: 47.0 },  // "Running remote diagnostics" - after "run a diagnostic"
-  { statusIndex: 6, time: 49.5 },  // "Card reader unresponsive" - after "card reader module is frozen"
-  { statusIndex: 7, time: 56.5 },  // "Resetting payment module" - after "trigger a remote reset"
-  { statusIndex: 8, time: 74.5 },  // "Discount offer presented" - after "35% discount"
-  { statusIndex: 9, time: 96.5 },  // "Charger available again" - after "available again"
-  { statusIndex: 10, time: 105.5 },// "Charging session confirmed" - after "it's worked"
-  { statusIndex: 11, time: 128.5 },// "Issue resolved" - after "No problem at all"
-];
-
-// Current phrase display state - strict lifecycle: Hidden → Active → Completed
-export interface CurrentPhraseState {
-  messageId: string | null;
-  role: "driver" | "amelia" | null;
-  // Full accumulated text - NEVER shrinks, only grows forward
-  accumulatedText: string;
-  // Current phrase being revealed
-  currentPhraseText: string;
-  wordProgress: number; // 0-1 progress within current phrase for word reveal
-  currentPhraseStartTime: number;
-  nextPhraseStartTime: number | null;
-  // Lifecycle state
-  state: "hidden" | "active" | "completed";
+export interface CurrentCueState {
+  cue: Cue | null;
+  lifecycle: CueLifecycle;
+  // For debug overlay
+  cueIndex: number;
+  nextCueTime: number | null;
 }
+
+// ============================================================
+// HOOK
+// ============================================================
 
 export const useDemoSequence = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -278,25 +115,22 @@ export const useDemoSequence = () => {
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Phrase-level state for kinetic captions
-  const [currentPhrase, setCurrentPhrase] = useState<CurrentPhraseState>({
-    messageId: null,
-    role: null,
-    accumulatedText: "",
-    currentPhraseText: "",
-    wordProgress: 0,
-    currentPhraseStartTime: 0,
-    nextPhraseStartTime: null,
-    state: "hidden"
+  // Current cue state - deterministic, no heuristics
+  const [currentCue, setCurrentCue] = useState<CurrentCueState>({
+    cue: null,
+    lifecycle: "hidden",
+    cueIndex: -1,
+    nextCueTime: CUE_SHEET[0]?.startTime ?? null
   });
+
+  // For exposing to debug overlay
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const lastMessageIdRef = useRef<string | null>(null);
   
-  // Smooth text persistence refs - prevent popping between phrases
-  const lastPhraseEndTimeRef = useRef<number>(0);
-  const lastPhraseStateRef = useRef<CurrentPhraseState | null>(null);
+  // Track last completed cue to maintain persistence
+  const lastCompletedCueRef = useRef<Cue | null>(null);
 
   // Initialize audio
   useEffect(() => {
@@ -325,34 +159,45 @@ export const useDemoSequence = () => {
     };
   }, []);
 
-  // Track completed messages for persistence between speakers
-  const completedMessagesRef = useRef<Message[]>([]);
-  const lastCompletedMessageRef = useRef<{ id: string; text: string } | null>(null);
-
-  // Audio-driven sync loop - phrase-level precision
+  // ============================================================
+  // DETERMINISTIC SYNC LOOP - Audio currentTime drives EVERYTHING
+  // ============================================================
   useEffect(() => {
     if (!hasStarted || !isPlaying || isComplete) return;
 
     const syncWithAudio = () => {
       if (!audioRef.current) return;
 
-      const currentTime = audioRef.current.currentTime;
-      
-      // Get first phrase start time dynamically
-      const firstPhraseStart = FLAT_PHRASES[0]?.startTime ?? 5.0;
+      // Get current time with offset applied
+      const rawTime = audioRef.current.currentTime;
+      const currentTime = rawTime + GLOBAL_OFFSET;
+      setAudioCurrentTime(rawTime);
 
-      // RULE: Before first speech, show NOTHING (background noise)
-      // Use actual first phrase time, not hardcoded value
-      if (currentTime < firstPhraseStart) {
-        setCurrentPhrase({
-          messageId: null,
-          role: null,
-          accumulatedText: "",
-          currentPhraseText: "",
-          wordProgress: 0,
-          currentPhraseStartTime: 0,
-          nextPhraseStartTime: null,
-          state: "hidden"
+      // Find active cue based on timestamps
+      let activeCueIndex = -1;
+      let activeCue: Cue | null = null;
+
+      for (let i = 0; i < CUE_SHEET.length; i++) {
+        const cue = CUE_SHEET[i];
+        if (currentTime >= cue.startTime && currentTime < cue.endTime) {
+          activeCueIndex = i;
+          activeCue = cue;
+          break;
+        }
+      }
+
+      // Determine next cue time for debug overlay
+      const nextCueTime = activeCueIndex >= 0 
+        ? CUE_SHEET[activeCueIndex + 1]?.startTime ?? null
+        : CUE_SHEET.find(c => c.startTime > currentTime)?.startTime ?? null;
+
+      // BEFORE FIRST CUE: Show nothing
+      if (currentTime < CUE_SHEET[0].startTime) {
+        setCurrentCue({
+          cue: null,
+          lifecycle: "hidden",
+          cueIndex: -1,
+          nextCueTime: CUE_SHEET[0].startTime
         });
         setCurrentStatus("");
         setIsProcessing(false);
@@ -361,142 +206,40 @@ export const useDemoSequence = () => {
         return;
       }
 
-      // Find the currently speaking phrase
-      let activePhrase: FlatPhrase | null = null;
-      let lastCompletedPhrase: FlatPhrase | null = null;
-      
-      for (const phrase of FLAT_PHRASES) {
-        const estimatedDuration = estimateSpeechDuration(phrase.text, phrase.role);
-        const hardEnd = phrase.nextStartTime ?? Infinity;
-        const endTime = Math.min(hardEnd, phrase.startTime + estimatedDuration);
-
-        if (currentTime >= phrase.startTime && currentTime < endTime) {
-          activePhrase = phrase;
-          break;
-        } else if (currentTime >= endTime) {
-          lastCompletedPhrase = phrase;
-        }
-      }
-
-      // Update status based on time - ALWAYS, regardless of phrase state
-      let newStatusIndex = 0;
-      for (const trigger of STATUS_TRIGGERS) {
-        if (currentTime >= trigger.time) {
-          newStatusIndex = trigger.statusIndex;
-        }
-      }
-      setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
-
-      if (!activePhrase) {
-        // NO ACTIVE SPEECH - but maintain last completed message until next speaker
-        // This prevents text from disappearing between utterances
-        
-        if (lastCompletedPhrase && lastPhraseStateRef.current) {
-          // Keep showing the COMPLETED state of the last phrase
-          const completedMessage = TIMED_TRANSCRIPT.find(m => m.id === lastCompletedPhrase!.messageId);
-          if (completedMessage) {
-            // Show full message text as completed
-            const fullText = completedMessage.phrases.map(p => p.text).join(" ");
-            
-            // Check if we need to update the completed message ref
-            if (!lastCompletedMessageRef.current || lastCompletedMessageRef.current.id !== completedMessage.id) {
-              lastCompletedMessageRef.current = { id: completedMessage.id, text: fullText };
-            }
-            
-            // Show completed state - frozen, no animation
-            setCurrentPhrase({
-              messageId: completedMessage.id,
-              role: completedMessage.role,
-              accumulatedText: fullText,
-              currentPhraseText: "",
-              wordProgress: 1,
-              currentPhraseStartTime: lastCompletedPhrase.startTime,
-              nextPhraseStartTime: null,
-              state: "completed"
-            });
-            setIsProcessing(false);
-          }
-        } else {
-          // Genuine silence at start - hide everything
-          setCurrentPhrase({
-            messageId: null,
-            role: null,
-            accumulatedText: "",
-            currentPhraseText: "",
-            wordProgress: 0,
-            currentPhraseStartTime: 0,
-            nextPhraseStartTime: null,
-            state: "hidden"
+      // ACTIVE CUE: Show current text
+      if (activeCue) {
+        lastCompletedCueRef.current = activeCue;
+        setCurrentCue({
+          cue: activeCue,
+          lifecycle: "active",
+          cueIndex: activeCueIndex,
+          nextCueTime
+        });
+        setIsProcessing(true);
+      } else {
+        // BETWEEN CUES: Show last completed cue as completed (frozen)
+        if (lastCompletedCueRef.current) {
+          const lastIdx = CUE_SHEET.findIndex(c => c.id === lastCompletedCueRef.current!.id);
+          setCurrentCue({
+            cue: lastCompletedCueRef.current,
+            lifecycle: "completed",
+            cueIndex: lastIdx,
+            nextCueTime
           });
-          setIsProcessing(false);
         }
-        
-        rafRef.current = requestAnimationFrame(syncWithAudio);
-        return;
+        setIsProcessing(false);
       }
 
-      // ACTIVE SPEECH - Build accumulated text for this message
-      const activeMessage = TIMED_TRANSCRIPT.find(m => m.id === activePhrase!.messageId) ?? null;
-      const latestPhraseIndex = activePhrase.phraseIndex;
-
-      // All completed phrases so far (full text)
-      const completedPhraseTexts = activeMessage
-        ? activeMessage.phrases.slice(0, latestPhraseIndex).map(p => p.text)
-        : [];
-      
-      // Current phrase being revealed
-      const currentPhraseText = activePhrase.text;
-      
-      // Calculate word progress - FASTER reveal to ensure full visibility
-      // Use 0.7x duration so text is fully revealed before speech ends
-      const estimatedDuration = estimateSpeechDuration(activePhrase.text, activePhrase.role);
-      const revealDuration = estimatedDuration * 0.7; // Faster reveal
-      const elapsed = currentTime - activePhrase.startTime;
-      const wordProgress = Math.min(1, Math.max(0, elapsed / revealDuration));
-      
-      // Accumulated text = all completed phrases joined
-      const accumulatedText = completedPhraseTexts.join(" ");
-
-      const newPhraseState: CurrentPhraseState = {
-        messageId: activePhrase.messageId,
-        role: activePhrase.role,
-        accumulatedText,
-        currentPhraseText,
-        wordProgress,
-        currentPhraseStartTime: activePhrase.startTime,
-        nextPhraseStartTime: activePhrase.nextStartTime,
-        state: "active"
-      };
-      
-      setCurrentPhrase(newPhraseState);
-      
-      // Track for persistence
-      lastPhraseEndTimeRef.current = activePhrase.startTime + estimatedDuration;
-      lastPhraseStateRef.current = newPhraseState;
-
-      // Build completed messages (all messages before current)
-      if (activePhrase.messageId !== lastMessageIdRef.current) {
-        const completedMessages: Message[] = [];
-        for (const msg of TIMED_TRANSCRIPT) {
-          if (msg.id === activePhrase.messageId) break;
-          const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
-          if (currentTime >= firstPhraseTime) {
-            completedMessages.push({
-              id: msg.id,
-              role: msg.role,
-              content: msg.phrases.map(p => p.text).join(" ")
-            });
-          }
+      // UPDATE SYSTEM STATUS - timestamp driven
+      let newStatus = "";
+      for (const trigger of SYSTEM_CUES) {
+        if (currentTime >= trigger.time) {
+          newStatus = trigger.status;
         }
-        setMessages(completedMessages);
-        lastMessageIdRef.current = activePhrase.messageId;
       }
+      setCurrentStatus(newStatus);
 
-      setIsProcessing(true);
-
-      // Note: Status is already updated at the top of the sync loop (line 373)
-
-      // Update timeline steps
+      // UPDATE TIMELINE STEPS
       const newSteps = createInitialSteps();
       for (const trigger of STEP_TRIGGERS) {
         const stepIndex = newSteps.findIndex(s => s.id === trigger.stepId);
@@ -520,7 +263,18 @@ export const useDemoSequence = () => {
       }
       setCurrentStepIndex(stepIdx);
 
-      // Completion is handled by 'ended' event - no hardcoded time check
+      // Build completed messages for reference
+      const completedMsgs: Message[] = [];
+      for (const cue of CUE_SHEET) {
+        if (currentTime >= cue.endTime) {
+          completedMsgs.push({
+            id: cue.id,
+            role: cue.speaker,
+            content: cue.text
+          });
+        }
+      }
+      setMessages(completedMsgs);
 
       rafRef.current = requestAnimationFrame(syncWithAudio);
     };
@@ -535,19 +289,16 @@ export const useDemoSequence = () => {
   }, [hasStarted, isPlaying, isComplete]);
 
   const goToNext = useCallback(() => {
-    // Find next message start time
     if (!audioRef.current) return;
-    const currentTime = audioRef.current.currentTime;
+    const currentTime = audioRef.current.currentTime + GLOBAL_OFFSET;
 
-    for (const msg of TIMED_TRANSCRIPT) {
-      const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
-      if (firstPhraseTime > currentTime + 0.5) {
-        audioRef.current.currentTime = firstPhraseTime;
+    for (const cue of CUE_SHEET) {
+      if (cue.startTime > currentTime + 0.5) {
+        audioRef.current.currentTime = cue.startTime - GLOBAL_OFFSET;
         return;
       }
     }
 
-    // No more messages, go to end
     setIsComplete(true);
     setShowConfirmation(true);
     setIsProcessing(false);
@@ -557,20 +308,18 @@ export const useDemoSequence = () => {
 
   const goToPrevious = useCallback(() => {
     if (!audioRef.current) return;
-    const currentTime = audioRef.current.currentTime;
+    const currentTime = audioRef.current.currentTime + GLOBAL_OFFSET;
 
-    // Find previous message start
     let prevTime = 0;
-    for (const msg of TIMED_TRANSCRIPT) {
-      const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
-      if (firstPhraseTime < currentTime - 1) {
-        prevTime = firstPhraseTime;
+    for (const cue of CUE_SHEET) {
+      if (cue.startTime < currentTime - 1) {
+        prevTime = cue.startTime;
       } else {
         break;
       }
     }
 
-    audioRef.current.currentTime = prevTime;
+    audioRef.current.currentTime = prevTime - GLOBAL_OFFSET;
     setIsComplete(false);
     setShowConfirmation(false);
   }, []);
@@ -611,17 +360,13 @@ export const useDemoSequence = () => {
     setCurrentStepIndex(-1);
     setHasStarted(false);
     setIsPlaying(false);
-    setCurrentPhrase({
-      messageId: null,
-      role: null,
-      accumulatedText: "",
-      currentPhraseText: "",
-      wordProgress: 0,
-      currentPhraseStartTime: 0,
-      nextPhraseStartTime: null,
-      state: "hidden"
+    setCurrentCue({
+      cue: null,
+      lifecycle: "hidden",
+      cueIndex: -1,
+      nextCueTime: CUE_SHEET[0]?.startTime ?? null
     });
-    lastMessageIdRef.current = null;
+    lastCompletedCueRef.current = null;
   }, []);
 
   const startDemo = useCallback(() => {
@@ -643,7 +388,8 @@ export const useDemoSequence = () => {
     isPlaying,
     currentStepIndex,
     totalSteps: STEP_TRIGGERS.length,
-    currentPhrase,
+    currentCue,
+    audioCurrentTime,
     reset,
     goToNext,
     goToPrevious,
@@ -653,3 +399,5 @@ export const useDemoSequence = () => {
   };
 };
 
+// Export CUE_SHEET for debug overlay
+export { CUE_SHEET };

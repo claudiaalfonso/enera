@@ -86,7 +86,8 @@ const Index = () => {
     isPlaying,
     currentStepIndex,
     totalSteps,
-    currentPhrase,
+    currentCue,
+    audioCurrentTime,
     reset,
     goToNext,
     goToPrevious,
@@ -251,7 +252,7 @@ const Index = () => {
                 isFullscreen={isFullscreen}
                 audioRef={audioRef}
                 isPlaying={isPlaying}
-                currentPhrase={currentPhrase}
+                currentCue={currentCue}
               />
             </motion.div>
           </div>
@@ -329,16 +330,8 @@ const Index = () => {
         {/* Dev Sync Calibration Overlay */}
         <SyncCalibrationOverlay 
           audioRef={audioRef}
-          currentPhrase={currentPhrase.messageId ? {
-            id: currentPhrase.messageId,
-            speaker: currentPhrase.role as "amelia" | "customer",
-            text: currentPhrase.currentPhraseText || "",
-            startTime: currentPhrase.currentPhraseStartTime,
-            duration: currentPhrase.nextPhraseStartTime 
-              ? currentPhrase.nextPhraseStartTime - currentPhrase.currentPhraseStartTime 
-              : 2.5
-          } : null}
-          wordProgress={currentPhrase.wordProgress}
+          currentCue={currentCue}
+          audioCurrentTime={audioCurrentTime}
           isPlaying={isPlaying}
         />
 

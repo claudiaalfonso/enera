@@ -1,22 +1,21 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./ChatMessage";
 import AudioVisualizer from "./AudioVisualizer";
-import { CurrentPhraseState } from "@/hooks/useDemoSequence";
+import { CurrentCueState } from "@/hooks/useDemoSequence";
 
 interface ConversationPanelProps {
   messages: Message[];
   isFullscreen?: boolean;
   audioRef?: React.RefObject<HTMLAudioElement | null>;
   isPlaying?: boolean;
-  currentPhrase?: CurrentPhraseState;
+  currentCue?: CurrentCueState;
 }
 
-// Estimate lines based on character count and container width
-// More conservative estimate for larger text
-const estimateLines = (text: string, charsPerLine: number = 40): number => {
+// Estimate lines based on character count
+const estimateLines = (text: string, charsPerLine: number = 50): number => {
   if (!text) return 0;
   return Math.ceil(text.length / charsPerLine);
 };
@@ -26,112 +25,77 @@ const ConversationPanel = ({
   isFullscreen = false,
   audioRef,
   isPlaying = false,
-  currentPhrase
+  currentCue
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Track accumulated display text separately from phrase data
-  // This allows us to control when resets happen based on 4-line rule
-  const [displayState, setDisplayState] = useState<{
+  // Track display blocks for 4-line rule
+  // Each block is a "paragraph" that can hold up to 4 lines
+  const [displayBlock, setDisplayBlock] = useState<{
     key: number;
-    accumulatedText: string;
-    role: "driver" | "amelia" | null;
-  }>({ key: 0, accumulatedText: "", role: null });
-  
-  const prevRoleRef = useRef<string | null>(null);
-  const lastFullTextRef = useRef<string>("");
+    speaker: "driver" | "amelia" | null;
+    text: string;
+    startCueId: string | null;
+  }>({ key: 0, speaker: null, text: "", startCueId: null });
 
-  // Check if we have content to show
-  const hasContent = currentPhrase && currentPhrase.state !== "hidden" && 
-    (currentPhrase.accumulatedText || currentPhrase.currentPhraseText);
-  
-  // Calculate the full text that would be shown
-  const { allWords, latestWordIndex, totalText } = useMemo(() => {
-    if (!currentPhrase || currentPhrase.state === "hidden") {
-      return { allWords: [], latestWordIndex: -1, totalText: "" };
-    }
-    
-    // For completed state, show all text immediately
-    if (currentPhrase.state === "completed") {
-      const words = currentPhrase.accumulatedText
-        ? currentPhrase.accumulatedText.split(" ").filter(w => w.length > 0)
-        : [];
-      return { 
-        allWords: words, 
-        latestWordIndex: words.length - 1,
-        totalText: currentPhrase.accumulatedText 
-      };
-    }
-    
-    // Active state - progressive reveal
-    const accumulatedWords = currentPhrase.accumulatedText
-      ? currentPhrase.accumulatedText.split(" ").filter(w => w.length > 0)
-      : [];
-    
-    const currentPhraseWords = currentPhrase.currentPhraseText
-      ? currentPhrase.currentPhraseText.split(" ").filter(w => w.length > 0)
-      : [];
-    
-    // Use wordProgress to determine how many words to reveal
-    const progress = currentPhrase.wordProgress ?? 0;
-    const wordsToReveal = Math.ceil(progress * currentPhraseWords.length);
-    const revealedCurrentWords = currentPhraseWords.slice(0, Math.max(1, wordsToReveal));
-    
-    const allWords = [...accumulatedWords, ...revealedCurrentWords];
-    const totalText = allWords.join(" ");
-    
-    return { 
-      allWords, 
-      latestWordIndex: allWords.length - 1,
-      totalText
-    };
-  }, [currentPhrase?.accumulatedText, currentPhrase?.currentPhraseText, currentPhrase?.wordProgress, currentPhrase?.state]);
+  const prevCueIdRef = useRef<string | null>(null);
 
-  // 4-line rule: Gentle reset when NEXT content would exceed 4 lines
-  // Reset happens BETWEEN thoughts (on speaker change or when lines would exceed)
+  // Determine what to show based on currentCue
+  const hasContent = currentCue && currentCue.cue && currentCue.lifecycle !== "hidden";
+
+  // 4-line rule: Reset block when speaker changes OR text would exceed 4 lines
   useEffect(() => {
-    if (!currentPhrase || currentPhrase.state === "hidden") {
-      // Clear display on silence
-      if (displayState.accumulatedText !== "") {
-        setDisplayState({ key: displayState.key, accumulatedText: "", role: null });
+    if (!currentCue?.cue) {
+      // No cue = silence, clear after a moment of no activity
+      if (displayBlock.text && currentCue?.lifecycle === "hidden") {
+        setDisplayBlock(prev => ({ ...prev, text: "", speaker: null, startCueId: null }));
       }
-      prevRoleRef.current = null;
-      lastFullTextRef.current = "";
       return;
     }
 
-    const currentRole = currentPhrase.role;
-    const currentLines = estimateLines(totalText);
+    const cue = currentCue.cue;
+    const cueId = cue.id;
     
-    // Check if we need a reset:
-    // 1. Speaker changed (natural paragraph break)
-    // 2. Text would exceed 4 lines
-    const speakerChanged = prevRoleRef.current !== null && prevRoleRef.current !== currentRole;
-    const wouldExceedLines = currentLines > 4;
-    
-    if (speakerChanged || wouldExceedLines) {
-      // Trigger gentle fade reset
-      setDisplayState(prev => ({
-        key: prev.key + 1,
-        accumulatedText: "",
-        role: currentRole
-      }));
-      prevRoleRef.current = currentRole;
-      lastFullTextRef.current = "";
-    } else {
-      // Continue accumulating
-      prevRoleRef.current = currentRole;
-      lastFullTextRef.current = totalText;
-      
-      // Update role if needed
-      if (displayState.role !== currentRole) {
-        setDisplayState(prev => ({ ...prev, role: currentRole }));
-      }
+    // Same cue - just update text if it changed (shouldn't in our deterministic model)
+    if (prevCueIdRef.current === cueId) {
+      return;
     }
-  }, [currentPhrase?.role, currentPhrase?.state, totalText]);
 
-  const isAmelia = currentPhrase?.role === "amelia";
-  const isCompleted = currentPhrase?.state === "completed";
+    // New cue detected
+    prevCueIdRef.current = cueId;
+
+    // Check if we need to reset block:
+    // 1. Speaker changed
+    // 2. Adding this text would exceed 4 lines
+    const speakerChanged = displayBlock.speaker !== null && displayBlock.speaker !== cue.speaker;
+    const potentialText = displayBlock.text ? `${displayBlock.text} ${cue.text}` : cue.text;
+    const wouldExceedLines = estimateLines(potentialText) > 4;
+
+    if (speakerChanged || wouldExceedLines) {
+      // Start new block with this cue's text
+      setDisplayBlock({
+        key: displayBlock.key + 1,
+        speaker: cue.speaker,
+        text: cue.text,
+        startCueId: cueId
+      });
+    } else {
+      // Append to current block (same speaker, within line limit)
+      setDisplayBlock(prev => ({
+        ...prev,
+        speaker: cue.speaker,
+        text: prev.text ? `${prev.text} ${cue.text}` : cue.text
+      }));
+    }
+  }, [currentCue?.cue?.id, currentCue?.lifecycle]);
+
+  const isAmelia = currentCue?.cue?.speaker === "amelia";
+  const isCompleted = currentCue?.lifecycle === "completed";
+
+  // Split text into words for display
+  const words = useMemo(() => {
+    return displayBlock.text.split(" ").filter(w => w.length > 0);
+  }, [displayBlock.text]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
@@ -170,7 +134,7 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Word-by-word kinetic reveal with 4-line max */}
+      {/* Messages - Word display with 4-line max */}
       <div
         ref={scrollRef}
         className={cn(
@@ -180,9 +144,9 @@ const ConversationPanel = ({
       >
         {/* Silence/noise = clean screen */}
         <AnimatePresence mode="wait">
-          {!hasContent ? null : (
+          {!hasContent || words.length === 0 ? null : (
             <motion.div 
-              key={displayState.key}
+              key={displayBlock.key}
               className="w-full max-w-lg"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -219,40 +183,27 @@ const ConversationPanel = ({
                 </span>
               </motion.div>
 
-              {/* Word-by-word reveal - stable, forward-only */}
+              {/* Text display - stable, forward-only */}
               <p className={cn(
                 "leading-relaxed font-medium",
                 isFullscreen ? "text-2xl" : "text-xl",
                 isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
               )}>
-                {allWords.map((word, idx) => {
-                  const isLatest = idx === latestWordIndex && !isCompleted;
-                  const isRecent = idx >= latestWordIndex - 2 || isCompleted;
-
-                  return (
-                    <motion.span
-                      key={`word-${idx}-${word}`}
-                      className={cn(
-                        "inline-block mr-[0.25em]",
-                        isCompleted ? "opacity-100" : (!isRecent && "opacity-60")
-                      )}
-                      initial={isCompleted ? false : { opacity: 0, y: 3 }}
-                      animate={{ 
-                        opacity: isCompleted ? 1 : (isRecent ? 1 : 0.6), 
-                        y: 0 
-                      }}
-                      transition={{ duration: 0.1, ease: "easeOut" }}
-                    >
-                      {isLatest ? (
-                        <span className={cn(isAmelia ? "text-enera-brand" : "text-foreground")}>
-                          {word}
-                        </span>
-                      ) : (
-                        word
-                      )}
-                    </motion.span>
-                  );
-                })}
+                {words.map((word, idx) => (
+                  <motion.span
+                    key={`${displayBlock.key}-word-${idx}`}
+                    className="inline-block mr-[0.25em]"
+                    initial={{ opacity: 0, y: 3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.15, 
+                      ease: "easeOut",
+                      delay: idx * 0.02 // Subtle stagger for new words
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
               </p>
             </motion.div>
           )}
