@@ -69,10 +69,11 @@ const CUE_SHEET: Cue[] = [
     id: "4", 
     speaker: "driver", 
     startTime: 34.8, 
-    endTime: 38.3, 
+    endTime: 39.0, 
     chunks: [
       { t: 34.8, text: "Uh, yeah, that's the one." },
-      { t: 35.0, text: "MH-102-B." }
+      { t: 35.0, text: "MH-102-B." },
+      { t: 39.0, text: "Thanks, let me..." }
     ]
   },
   { 
@@ -84,9 +85,8 @@ const CUE_SHEET: Cue[] = [
       { t: 39.0, text: "Perfect." },
       { t: 40.78, text: "Let me just look into what's happening there." },
       { t: 43.2, text: "I've just run a diagnostic," },
-      { t: 45.0, text: "and it looks like the card reader" },
-      { t: 47.0, text: "is frozen," },
-      { t: 47.9, text: "although the charger itself is healthy." },
+      { t: 45.0, text: "and it looks like the card reader module" },
+      { t: 47.0, text: "although the charger itself is healthy." },
       { t: 49.8, text: "I'm going to trigger a remote reset" },
       { t: 52.9, text: "on the reader for you now." },
       { t: 54.76, text: "It should take about 45 seconds" },
@@ -121,23 +121,24 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "8", 
     speaker: "driver", 
-    startTime: 81.5, 
-    endTime: 89.0, 
+    startTime: 77.89, 
+    endTime: 84.0, 
     chunks: [
-      { t: 81.5, text: "Oh, interesting." },
-      { t: 82.8, text: "I wasn't aware of that." },
-      { t: 84.5, text: "I will give the app a go next time." },
-      { t: 87.0, text: "Thanks." }
+      { t: 77.89, text: "Oh, interesting." },
+      { t: 79.5, text: "I wasn't aware of that." },
+      { t: 81.0, text: "I will give the app a go next time." },
+      { t: 82.9, text: "Thanks." }
     ]
   },
   { 
     id: "9", 
     speaker: "amelia", 
-    startTime: 89.5, 
+    startTime: 84.5, 
     endTime: 101.5, 
     chunks: [
-      { t: 89.5, text: "It's definitely worth it for the savings." },
-      { t: 92.0, text: "Okay, the card reader has finished rebooting" },
+      { t: 84.5, text: "It's definitely" },
+      { t: 85.9, text: "worth it for the savings." },
+      { t: 90.0, text: "Okay, and it shows the card reader has finished rebooting" },
       { t: 94.5, text: "and is showing as available again." },
       { t: 96.5, text: "Could you give your card" },
       { t: 98.0, text: "another tap for me?" },
