@@ -261,6 +261,46 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Compact Mode Indicator */}
+        <AnimatePresence>
+          {isCompact && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+            >
+              <button
+                onClick={toggleCompact}
+                className="flex items-center gap-3 px-4 py-2 rounded-full bg-card/80 backdrop-blur-md border border-border/30 shadow-lg hover:bg-card transition-colors group"
+              >
+                {/* Progress indicator */}
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-1 bg-muted/50 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-enera-brand rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(0, ((currentStepIndex + 1) / totalSteps) * 100)}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {Math.max(1, currentStepIndex + 1)}/{totalSteps}
+                  </span>
+                </div>
+                
+                <div className="w-px h-3 bg-border/50" />
+                
+                {/* Hint */}
+                <span className="text-xs text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                  Press <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-[10px] font-medium">C</kbd> to show controls
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
