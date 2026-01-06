@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import DemoHeader from "@/components/demo/DemoHeader";
 import SystemPanel from "@/components/demo/SystemPanel";
 import ConversationPanel from "@/components/demo/ConversationPanel";
 import PresentationControls from "@/components/demo/PresentationControls";
+import WelcomeOverlay from "@/components/demo/WelcomeOverlay";
 import { useDemoSequence } from "@/hooks/useDemoSequence";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,9 @@ const controlsVariants = {
 };
 
 const Index = () => {
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [demoStarted, setDemoStarted] = useState(false);
+
   const {
     messages,
     steps,
@@ -84,18 +88,23 @@ const Index = () => {
     goToPrevious,
     togglePlayPause,
     switchMode,
-    audioRef
-  } = useDemoSequence("auto");
+    audioRef,
+    startDemo
+  } = useDemoSequence("manual"); // Start in manual mode, will switch to auto on start
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isIntroComplete, setIsIntroComplete] = useState(false);
 
-  // Mark intro as complete after animation
-  useEffect(() => {
-    const timer = setTimeout(() => setIsIntroComplete(true), 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  // Handle demo start
+  const handleStartDemo = useCallback(() => {
+    setShowWelcome(false);
+    // Small delay for overlay fade out
+    setTimeout(() => {
+      setDemoStarted(true);
+      switchMode("auto");
+      startDemo();
+    }, 300);
+  }, [switchMode, startDemo]);
 
   // Handle fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -128,6 +137,13 @@ const Index = () => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Start demo with space if welcome is showing
+      if (showWelcome && (e.key === " " || e.key === "Enter")) {
+        e.preventDefault();
+        handleStartDemo();
+        return;
+      }
+
       if (e.key === " " || e.key === "k") {
         e.preventDefault();
         togglePlayPause();
@@ -146,78 +162,88 @@ const Index = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlayPause, goToNext, goToPrevious, toggleFullscreen, toggleMute, reset]);
+  }, [showWelcome, handleStartDemo, togglePlayPause, goToNext, goToPrevious, toggleFullscreen, toggleMute, reset]);
 
   return (
-    <motion.div 
-      className={cn(
-        "h-screen flex flex-col overflow-hidden bg-background page-gradient",
-        isFullscreen && "presentation-mode"
-      )}
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className={cn(
+      "h-screen flex flex-col overflow-hidden bg-background page-gradient",
+      isFullscreen && "presentation-mode"
+    )}>
       {/* SEO */}
       <title>Amelia Voice AI Demo | Enera</title>
       <meta name="description" content="Experience Amelia, Enera's intelligent Voice AI that resolves EV charging issues in real-time. Enterprise-grade support automation." />
 
-      {/* Header */}
-      <motion.div variants={headerVariants}>
-        <DemoHeader isFullscreen={isFullscreen} />
-      </motion.div>
+      {/* Welcome Overlay */}
+      <AnimatePresence>
+        {showWelcome && (
+          <WelcomeOverlay onStart={handleStartDemo} />
+        )}
+      </AnimatePresence>
 
-      {/* Main Content */}
-      <main className="flex-1 flex min-h-0 pb-14">
-        {/* Left Panel - System View (60%) */}
-        <motion.div
-          className={cn(
-            "border-r border-border/50 bg-card/60 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
-            isFullscreen ? "w-[55%]" : "w-[60%]"
-          )}
-          variants={leftPanelVariants}
-        >
-          <SystemPanel
-            currentStatus={currentStatus}
-            isProcessing={isProcessing}
-            steps={steps}
-            showConfirmation={showConfirmation}
+      {/* Main Demo UI */}
+      <motion.div
+        className="flex flex-col h-full"
+        variants={containerVariants}
+        initial="hidden"
+        animate={demoStarted ? "visible" : "hidden"}
+      >
+        {/* Header */}
+        <motion.div variants={headerVariants}>
+          <DemoHeader isFullscreen={isFullscreen} />
+        </motion.div>
+
+        {/* Main Content */}
+        <main className="flex-1 flex min-h-0 pb-14">
+          {/* Left Panel - System View (60%) */}
+          <motion.div
+            className={cn(
+              "border-r border-border/50 bg-card/60 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
+              isFullscreen ? "w-[55%]" : "w-[60%]"
+            )}
+            variants={leftPanelVariants}
+          >
+            <SystemPanel
+              currentStatus={currentStatus}
+              isProcessing={isProcessing}
+              steps={steps}
+              showConfirmation={showConfirmation}
+              isFullscreen={isFullscreen}
+            />
+          </motion.div>
+
+          {/* Right Panel - Conversation (40%) */}
+          <motion.div
+            className={cn(
+              "bg-enera-surface-elevated/80 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
+              isFullscreen ? "w-[45%]" : "w-[40%]"
+            )}
+            variants={rightPanelVariants}
+          >
+            <ConversationPanel messages={messages} isFullscreen={isFullscreen} />
+          </motion.div>
+        </main>
+
+        {/* Presentation Controls */}
+        <motion.div variants={controlsVariants}>
+          <PresentationControls
+            isPlaying={isPlaying}
+            isComplete={isComplete}
+            playMode={playMode}
+            currentStep={currentStepIndex}
+            totalSteps={totalSteps}
             isFullscreen={isFullscreen}
+            isMuted={isMuted}
+            onTogglePlay={togglePlayPause}
+            onNext={goToNext}
+            onPrevious={goToPrevious}
+            onSwitchMode={switchMode}
+            onToggleFullscreen={toggleFullscreen}
+            onToggleMute={toggleMute}
+            onReset={reset}
           />
         </motion.div>
-
-        {/* Right Panel - Conversation (40%) */}
-        <motion.div
-          className={cn(
-            "bg-enera-surface-elevated/80 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
-            isFullscreen ? "w-[45%]" : "w-[40%]"
-          )}
-          variants={rightPanelVariants}
-        >
-          <ConversationPanel messages={messages} isFullscreen={isFullscreen} />
-        </motion.div>
-      </main>
-
-      {/* Presentation Controls */}
-      <motion.div variants={controlsVariants}>
-        <PresentationControls
-          isPlaying={isPlaying}
-          isComplete={isComplete}
-          playMode={playMode}
-          currentStep={currentStepIndex}
-          totalSteps={totalSteps}
-          isFullscreen={isFullscreen}
-          isMuted={isMuted}
-          onTogglePlay={togglePlayPause}
-          onNext={goToNext}
-          onPrevious={goToPrevious}
-          onSwitchMode={switchMode}
-          onToggleFullscreen={toggleFullscreen}
-          onToggleMute={toggleMute}
-          onReset={reset}
-        />
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

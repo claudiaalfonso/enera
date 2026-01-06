@@ -91,26 +91,6 @@ const STATUS_MESSAGES = [
   "Session confirmed"
 ];
 
-// Audio timestamps in seconds for each sequence step
-const AUDIO_TIMESTAMPS = [
-  0,    // Step 0: Intro (Amelia greeting)
-  11,   // Step 1: Driver explains problem
-  25,   // Step 2: Amelia asks for confirmation
-  34,   // Step 3: Driver confirms charger ID
-  39,   // Step 4: Amelia runs diagnostic
-  50,   // Step 5: Remote reset trigger
-  58,   // Step 6: Driver waits
-  63,   // Step 7: Monitoring
-  63,   // Step 8: Value pitch
-  78,   // Step 9: Driver response to app
-  86,   // Step 10: Reader ready
-  93,   // Step 11: Success
-  98,   // Step 12: Driver confirms working
-  109,  // Step 13: Amelia confirms
-  117,  // Step 14: Driver thanks
-  123,  // Step 15: Final goodbye
-];
-
 export interface SequenceAction {
   messageIndex: number | null;
   statusIndex: number;
@@ -148,11 +128,11 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>(initialMode);
-  const [isPlaying, setIsPlaying] = useState(initialMode === "auto");
+  const [isPlaying, setIsPlaying] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [hasStarted, setHasStarted] = useState(false);
   
   const sequenceIndexRef = useRef(-1);
-  const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -265,9 +245,9 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     setIsComplete(false);
     setCurrentStepIndex(-1);
     sequenceIndexRef.current = -1;
-    hasStartedRef.current = false;
-    setIsPlaying(playMode === "auto");
-  }, [playMode]);
+    setHasStarted(false);
+    setIsPlaying(false);
+  }, []);
 
   const switchMode = useCallback((mode: PlayMode) => {
     setPlayMode(mode);
@@ -277,9 +257,19 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     }
   }, []);
 
+  // Start demo function - called when user clicks Start Demo
+  const startDemo = useCallback(() => {
+    setHasStarted(true);
+    setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  }, []);
+
   // Auto-play logic
   useEffect(() => {
-    if (playMode !== "auto" || !isPlaying || isComplete) return;
+    if (!hasStarted || playMode !== "auto" || !isPlaying || isComplete) return;
 
     const scheduleNext = () => {
       const currentIdx = sequenceIndexRef.current;
@@ -289,14 +279,6 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         goToNext();
       }, delay);
     };
-
-    // Start or continue auto-play
-    if (!hasStartedRef.current) {
-      hasStartedRef.current = true;
-      if (audioRef.current) {
-        audioRef.current.play().catch(() => {});
-      }
-    }
     
     scheduleNext();
 
@@ -305,7 +287,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [playMode, isPlaying, isComplete, currentStepIndex, goToNext]);
+  }, [hasStarted, playMode, isPlaying, isComplete, currentStepIndex, goToNext]);
 
   return {
     messages,
@@ -323,6 +305,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     goToPrevious,
     togglePlayPause,
     switchMode,
-    audioRef
+    audioRef,
+    startDemo
   };
 };
