@@ -22,9 +22,9 @@ const TIMED_TRANSCRIPT: TimedMessage[] = [
     id: "1",
     role: "amelia",
     phrases: [
-      { text: "Hello, my name is Amelia,", startTime: 4.8 },
-      { text: "and I'm with Enera Support.", startTime: 7.0 },
-      { text: "How can I help you today?", startTime: 9.2 },
+      { text: "Hello, my name is Amelia,", startTime: 6.3 },
+      { text: "and I'm with Enera Support.", startTime: 8.5 },
+      { text: "How can I help you today?", startTime: 10.7 },
     ]
   },
   {
