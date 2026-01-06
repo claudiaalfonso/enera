@@ -153,30 +153,31 @@ const ConversationPanel = ({
               </motion.div>
 
               {/* Phrase chunks - progressive reveal */}
-              <p className={cn(
-                "leading-relaxed font-medium",
-                isFullscreen ? "text-2xl" : "text-xl",
-                isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
-              )}>
+              <div
+                className={cn(
+                  "leading-relaxed font-medium space-y-1",
+                  isFullscreen ? "text-2xl" : "text-xl",
+                  isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
+                )}
+              >
                 <AnimatePresence mode="popLayout">
-                  {displayChunks.map((chunk, idx) => (
-                    <motion.span
+                  {displayChunks.map((chunk) => (
+                    <motion.div
                       key={`${utteranceKey}-chunk-${chunk.t}`}
-                      className="inline"
+                      className="block"
                       initial={{ opacity: 0, y: 4, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                      transition={{ 
-                        duration: 0.2, 
+                      transition={{
+                        duration: 0.2,
                         ease: [0.25, 0.1, 0.25, 1],
                       }}
                     >
                       {chunk.text}
-                      {idx < displayChunks.length - 1 ? " " : ""}
-                    </motion.span>
+                    </motion.div>
                   ))}
                 </AnimatePresence>
-              </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
