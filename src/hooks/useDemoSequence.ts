@@ -68,10 +68,10 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "4", 
     speaker: "driver", 
-    startTime: 34.8, 
+    startTime: 34.0, 
     endTime: 39.0, 
     chunks: [
-      { t: 34.8, text: "Uh, yeah, that's the one." },
+      { t: 34.0, text: "Uh, yeah, that's the one." },
       { t: 35.0, text: "MH-102-B." },
       { t: 39.0, text: "Thanks, let me..." }
     ]
@@ -83,6 +83,7 @@ const CUE_SHEET: Cue[] = [
     endTime: 57.5, 
     chunks: [
       { t: 39.0, text: "Perfect." },
+      { t: 39.9, text: "Thanks." },
       { t: 40.78, text: "Let me just look into what's happening there." },
       { t: 43.2, text: "I've just run a diagnostic," },
       { t: 45.0, text: "and it looks like the card reader module" },
