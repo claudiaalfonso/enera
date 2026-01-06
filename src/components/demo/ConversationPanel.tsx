@@ -129,7 +129,34 @@ const ConversationPanel = ({
             </p>
           </motion.div>
         ) : (
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md relative">
+            {/* Subtle background glow that shifts with speaker */}
+            <AnimatePresence mode="wait">
+              {currentMessage && (
+                <motion.div
+                  key={`glow-${currentMessage.role}`}
+                  className={cn(
+                    "absolute inset-0 -z-10 rounded-2xl blur-3xl opacity-20 pointer-events-none",
+                    currentMessage.role === "amelia" 
+                      ? "bg-enera-brand" 
+                      : "bg-muted-foreground"
+                  )}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ 
+                    opacity: currentMessage.role === "amelia" ? 0.15 : 0.08,
+                    scale: 1 
+                  }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  style={{
+                    transform: currentMessage.role === "amelia" 
+                      ? "translateX(20%)" 
+                      : "translateX(-20%)",
+                  }}
+                />
+              )}
+            </AnimatePresence>
+
             <AnimatePresence mode="wait" initial={false}>
               {currentMessage && (
                 <motion.div
