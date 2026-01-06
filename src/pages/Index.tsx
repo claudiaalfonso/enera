@@ -320,6 +320,18 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Powered by Enera Footer Badge */}
+        <motion.div
+          className="fixed bottom-3 right-4 z-40"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 0.5 }}
+        >
+          <span className="text-[10px] text-muted-foreground/50 tracking-wide uppercase">
+            Powered by <span className="text-enera-brand/60 font-medium">Enera</span>
+          </span>
+        </motion.div>
       </motion.div>
     </div>
   );
