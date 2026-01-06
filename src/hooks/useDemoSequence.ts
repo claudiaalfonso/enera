@@ -27,12 +27,12 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "1", 
     speaker: "amelia", 
-    startTime: 6.3, 
-    endTime: 12.0, 
+    startTime: 5.9, 
+    endTime: 10.9, 
     chunks: [
-      { t: 6.3, text: "Hello, my name is Amelia," },
-      { t: 7.8, text: "and I'm with Enera Support." },
-      { t: 9.5, text: "How can I help you today?" }
+      { t: 5.9, text: "Hello, my name is Amelia," },
+      { t: 7.4, text: "and I'm with Enera Support." },
+      { t: 9.1, text: "How can I help you today?" }
     ]
   },
   { 
