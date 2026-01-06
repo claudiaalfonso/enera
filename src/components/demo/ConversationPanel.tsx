@@ -73,13 +73,26 @@ const ConversationPanel = ({
     return { chunks, currentChunkIndex, chunkProgress };
   }, [currentMessage, revealProgress]);
 
-  // Get words to reveal in current chunk
-  const getRevealedWords = (chunk: string, progress: number): { revealed: string; cursor: boolean } => {
+  // Get words to reveal in current chunk with highlight info
+  const getRevealedWords = (chunk: string, progress: number, isAmelia: boolean): { 
+    wordsBeforeHighlight: string; 
+    highlightWord: string; 
+    cursor: boolean;
+  } => {
     const words = chunk.split(" ");
     const wordsToShow = Math.ceil(progress * words.length);
-    const revealed = words.slice(0, wordsToShow).join(" ");
+    const revealedWords = words.slice(0, wordsToShow);
     const cursor = progress < 1 && progress > 0;
-    return { revealed, cursor };
+    
+    // Split into words before highlight and the highlight word
+    if (revealedWords.length === 0) {
+      return { wordsBeforeHighlight: "", highlightWord: "", cursor };
+    }
+    
+    const highlightWord = revealedWords[revealedWords.length - 1];
+    const wordsBeforeHighlight = revealedWords.slice(0, -1).join(" ");
+    
+    return { wordsBeforeHighlight, highlightWord, cursor };
   };
 
   // Animation variants for smooth speaker transitions
@@ -268,14 +281,15 @@ const ConversationPanel = ({
                       const isCompleted = idx < revealedContent.currentChunkIndex;
                       const isCurrent = idx === revealedContent.currentChunkIndex;
                       const isHidden = idx > revealedContent.currentChunkIndex;
+                      const isAmelia = currentMessage.role === "amelia";
                       
                       if (isHidden) return null;
                       
-                      const { revealed, cursor } = isCurrent 
-                        ? getRevealedWords(chunk, revealedContent.chunkProgress)
-                        : { revealed: chunk, cursor: false };
+                      const { wordsBeforeHighlight, highlightWord, cursor } = isCurrent 
+                        ? getRevealedWords(chunk, revealedContent.chunkProgress, isAmelia)
+                        : { wordsBeforeHighlight: chunk, highlightWord: "", cursor: false };
                       
-                      if (!revealed && isCurrent) return null;
+                      if (!wordsBeforeHighlight && !highlightWord && isCurrent) return null;
                       
                       return (
                         <motion.p 
@@ -283,7 +297,7 @@ const ConversationPanel = ({
                           className={cn(
                             "leading-relaxed font-medium transition-opacity duration-200",
                             isFullscreen ? "text-xl" : "text-lg",
-                            currentMessage.role === "amelia" 
+                            isAmelia 
                               ? "text-right text-foreground" 
                               : "text-left text-foreground/90",
                             isCompleted && "opacity-60"
@@ -292,12 +306,37 @@ const ConversationPanel = ({
                           animate={{ opacity: isCompleted ? 0.6 : 1, y: 0 }}
                           transition={{ delay: idx * 0.05, duration: 0.3 }}
                         >
-                          {revealed}
+                          {wordsBeforeHighlight}
+                          {wordsBeforeHighlight && highlightWord && " "}
+                          {highlightWord && isCurrent && (
+                            <motion.span
+                              key={highlightWord}
+                              className={cn(
+                                "relative inline-block",
+                                isAmelia ? "text-enera-brand" : "text-foreground"
+                              )}
+                              initial={{ opacity: 0.5, scale: 1.05 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              {highlightWord}
+                              {/* Subtle glow behind highlighted word */}
+                              <motion.span
+                                className={cn(
+                                  "absolute inset-0 -z-10 blur-sm rounded",
+                                  isAmelia ? "bg-enera-brand/20" : "bg-foreground/10"
+                                )}
+                                initial={{ opacity: 0.8 }}
+                                animate={{ opacity: 0 }}
+                                transition={{ duration: 0.4 }}
+                              />
+                            </motion.span>
+                          )}
                           {cursor && (
                             <motion.span
                               className={cn(
                                 "inline-block w-0.5 h-5 ml-0.5 align-middle rounded-full",
-                                currentMessage.role === "amelia" ? "bg-enera-brand" : "bg-muted-foreground"
+                                isAmelia ? "bg-enera-brand" : "bg-muted-foreground"
                               )}
                               animate={{ opacity: [1, 0.3, 1] }}
                               transition={{ duration: 0.8, repeat: Infinity }}
