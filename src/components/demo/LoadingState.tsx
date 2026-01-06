@@ -1,76 +1,7 @@
 import { motion } from "framer-motion";
 import eneraWaveIcon from "@/assets/enera-wave-icon.png";
 
-const LoadingState = () => {
-  return (
-    <motion.div
-      className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-background"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-    >
-      {/* Wave background pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <WaveBackground />
-      </div>
-
-      {/* Loading content */}
-      <motion.div
-        className="relative z-10 flex flex-col items-center"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-      >
-        {/* Pulsing wave icon */}
-        <div className="relative mb-6">
-          {/* Outer glow ring */}
-          <motion.div
-            className="absolute inset-0 bg-enera-brand/20 rounded-3xl blur-xl"
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.3, 0.15, 0.3],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          
-          {/* Icon container with pulse */}
-          <motion.div
-            className="relative bg-white rounded-2xl shadow-lg shadow-enera-brand/15 p-4 border border-enera-brand/10"
-            animate={{
-              scale: [1, 1.02, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <img 
-              src={eneraWaveIcon} 
-              alt="Enera" 
-              className="h-12 w-12 object-contain"
-            />
-          </motion.div>
-        </div>
-
-        {/* Loading text */}
-        <motion.p
-          className="text-sm text-muted-foreground"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          Loading demo...
-        </motion.p>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Animated wave background component
+// Animated wave background component - defined first so it can be used in LoadingState
 const WaveBackground = () => {
   return (
     <svg
@@ -151,6 +82,75 @@ const WaveBackground = () => {
         }}
       />
     </svg>
+  );
+};
+
+const LoadingState = () => {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-background"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      {/* Wave background pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <WaveBackground />
+      </div>
+
+      {/* Loading content */}
+      <motion.div
+        className="relative z-10 flex flex-col items-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
+        {/* Pulsing wave icon */}
+        <div className="relative mb-6">
+          {/* Outer glow ring */}
+          <motion.div
+            className="absolute inset-0 bg-enera-brand/20 rounded-3xl blur-xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.3, 0.15, 0.3],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          
+          {/* Icon container with pulse */}
+          <motion.div
+            className="relative bg-white rounded-2xl shadow-lg shadow-enera-brand/15 p-4 border border-enera-brand/10"
+            animate={{
+              scale: [1, 1.02, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <img 
+              src={eneraWaveIcon} 
+              alt="Enera" 
+              className="h-12 w-12 object-contain"
+            />
+          </motion.div>
+        </div>
+
+        {/* Loading text */}
+        <motion.p
+          className="text-sm text-muted-foreground"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Loading demo...
+        </motion.p>
+      </motion.div>
+    </motion.div>
   );
 };
 
