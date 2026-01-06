@@ -237,19 +237,19 @@ const STEP_TRIGGERS: { stepId: string; activateAt: number; completeAt: number }[
   { stepId: "9", activateAt: 105.5, completeAt: 135 },   // Session started
 ];
 
-// Status update triggers - synced to new timestamps
+// Status update triggers - appear AFTER Amelia references each action
 const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
-  { statusIndex: 1, time: 4.8 },   // Call connected
-  { statusIndex: 2, time: 11.5 },  // Issue received
-  { statusIndex: 3, time: 26 },    // Locating charger
-  { statusIndex: 4, time: 35.5 },  // MH-102-B confirmed
-  { statusIndex: 5, time: 44.5 },  // Running diagnostics
-  { statusIndex: 6, time: 49.5 },  // Reader frozen
-  { statusIndex: 7, time: 54 },    // Resetting reader
-  { statusIndex: 8, time: 71.5 },  // Upsell offered
-  { statusIndex: 9, time: 94 },    // Charger available
-  { statusIndex: 10, time: 105.5 },// Session active
-  { statusIndex: 11, time: 126 },  // Call complete
+  { statusIndex: 1, time: 10.5 },  // "Listening to driver" - after "How can I help you today?" (9.2s)
+  { statusIndex: 2, time: 25.5 },  // "Understanding the issue" - after driver finishes explaining (23.5s)
+  { statusIndex: 3, time: 29.0 },  // "Locating charger station" - after "Let me look into that" (28.2s)
+  { statusIndex: 4, time: 38.5 },  // "Charger MH-102-B identified" - after driver confirms ID (37.5s)
+  { statusIndex: 5, time: 45.5 },  // "Running remote diagnostics" - after "run a diagnostic" (44.5s)
+  { statusIndex: 6, time: 48.0 },  // "Card reader unresponsive" - after "card reader module is frozen" (46.5s)
+  { statusIndex: 7, time: 55.0 },  // "Resetting payment module" - after "trigger a remote reset" (52.0s)
+  { statusIndex: 8, time: 73.0 },  // "Discount offer presented" - after "35% discount" (71.5s)
+  { statusIndex: 9, time: 95.0 },  // "Charger available again" - after "available again" (94.0s)
+  { statusIndex: 10, time: 104.0 },// "Charging session confirmed" - after "it's worked" (103.0s)
+  { statusIndex: 11, time: 127.0 },// "Issue resolved" - after "No problem at all" (126.0s)
 ];
 
 // Current phrase display state - strict lifecycle: Hidden → Active → Completed
