@@ -31,126 +31,126 @@ const TIMED_TRANSCRIPT: TimedMessage[] = [
     id: "2",
     role: "driver",
     phrases: [
-      { text: "Hi, I'm trying to use the charger", startTime: 11.5 },
-      { text: "at the Church Street car park", startTime: 14.0 },
-      { text: "in Market Harborough,", startTime: 16.2 },
-      { text: "but I'm not having much luck.", startTime: 18.0 },
-      { text: "I've tried tapping my contactless card", startTime: 20.0 },
-      { text: "a few times now,", startTime: 22.2 },
-      { text: "and it looks like the screen isn't changing at all.", startTime: 23.5 },
+      { text: "Hi, I'm trying to use the charger", startTime: 13.0 },
+      { text: "at the Church Street car park", startTime: 15.5 },
+      { text: "in Market Harborough,", startTime: 17.7 },
+      { text: "but I'm not having much luck.", startTime: 19.5 },
+      { text: "I've tried tapping my contactless card", startTime: 21.5 },
+      { text: "a few times now,", startTime: 23.7 },
+      { text: "and it looks like the screen isn't changing at all.", startTime: 25.0 },
     ]
   },
   {
     id: "3",
     role: "amelia",
     phrases: [
-      { text: "I'm sorry you're having trouble.", startTime: 26.0 },
-      { text: "Let me look into that for you.", startTime: 28.2 },
-      { text: "You're in Market Harborough.", startTime: 30.5 },
-      { text: "Can you just confirm the charger ID", startTime: 32.0 },
-      { text: "is MH-102-B?", startTime: 34.0 },
+      { text: "I'm sorry you're having trouble.", startTime: 27.5 },
+      { text: "Let me look into that for you.", startTime: 29.7 },
+      { text: "You're in Market Harborough.", startTime: 32.0 },
+      { text: "Can you just confirm the charger ID", startTime: 33.5 },
+      { text: "is MH-102-B?", startTime: 35.5 },
     ]
   },
   {
     id: "4",
     role: "driver",
     phrases: [
-      { text: "Yeah, that's the one.", startTime: 35.5 },
-      { text: "MH-102-B.", startTime: 37.5 },
+      { text: "Yeah, that's the one.", startTime: 37.0 },
+      { text: "MH-102-B.", startTime: 39.0 },
     ]
   },
   {
     id: "5",
     role: "amelia",
     phrases: [
-      { text: "Perfect, thanks.", startTime: 40.0 },
-      { text: "Let me just look into what's happening there.", startTime: 41.5 },
-      { text: "I've just run a diagnostic,", startTime: 44.5 },
-      { text: "and it looks like the card reader module is frozen,", startTime: 46.5 },
-      { text: "although the charger itself is healthy.", startTime: 49.5 },
-      { text: "I'm going to trigger a remote reset", startTime: 52.0 },
-      { text: "on the reader for you now.", startTime: 54.0 },
-      { text: "It should take about 45 seconds", startTime: 56.0 },
-      { text: "to reboot and come back online.", startTime: 58.0 },
+      { text: "Perfect, thanks.", startTime: 41.5 },
+      { text: "Let me just look into what's happening there.", startTime: 43.0 },
+      { text: "I've just run a diagnostic,", startTime: 46.0 },
+      { text: "and it looks like the card reader module is frozen,", startTime: 48.0 },
+      { text: "although the charger itself is healthy.", startTime: 51.0 },
+      { text: "I'm going to trigger a remote reset", startTime: 53.5 },
+      { text: "on the reader for you now.", startTime: 55.5 },
+      { text: "It should take about 45 seconds", startTime: 57.5 },
+      { text: "to reboot and come back online.", startTime: 59.5 },
     ]
   },
   {
     id: "6",
     role: "driver",
     phrases: [
-      { text: "Great, okay, I'll hang on.", startTime: 60.0 },
+      { text: "Great, okay, I'll hang on.", startTime: 61.5 },
     ]
   },
   {
     id: "7",
     role: "amelia",
     phrases: [
-      { text: "While we're waiting for that to cycle,", startTime: 64.0 },
-      { text: "I noticed you're using a guest payment.", startTime: 66.5 },
-      { text: "Did you know that if you used our app,", startTime: 69.0 },
-      { text: "you'd actually get a 35% discount", startTime: 71.5 },
-      { text: "for charging during this off-peak window?", startTime: 74.0 },
-      { text: "It's a fair bit cheaper", startTime: 76.5 },
-      { text: "than the standard contactless rate.", startTime: 78.0 },
+      { text: "While we're waiting for that to cycle,", startTime: 65.5 },
+      { text: "I noticed you're using a guest payment.", startTime: 68.0 },
+      { text: "Did you know that if you used our app,", startTime: 70.5 },
+      { text: "you'd actually get a 35% discount", startTime: 73.0 },
+      { text: "for charging during this off-peak window?", startTime: 75.5 },
+      { text: "It's a fair bit cheaper", startTime: 78.0 },
+      { text: "than the standard contactless rate.", startTime: 79.5 },
     ]
   },
   {
     id: "8",
     role: "driver",
     phrases: [
-      { text: "Oh, interesting.", startTime: 80.0 },
-      { text: "I wasn't aware of that.", startTime: 82.0 },
-      { text: "I will give the app a go next time.", startTime: 84.0 },
-      { text: "Thanks.", startTime: 86.5 },
+      { text: "Oh, interesting.", startTime: 81.5 },
+      { text: "I wasn't aware of that.", startTime: 83.5 },
+      { text: "I will give the app a go next time.", startTime: 85.5 },
+      { text: "Thanks.", startTime: 88.0 },
     ]
   },
   {
     id: "9",
     role: "amelia",
     phrases: [
-      { text: "It's definitely worth it for the savings.", startTime: 88.0 },
-      { text: "Okay, the card reader has finished rebooting", startTime: 91.0 },
-      { text: "and is showing as available again.", startTime: 94.0 },
-      { text: "Could you give your card another tap for me?", startTime: 96.0 },
-      { text: "It should authorize straight away now.", startTime: 98.5 },
+      { text: "It's definitely worth it for the savings.", startTime: 89.5 },
+      { text: "Okay, the card reader has finished rebooting", startTime: 92.5 },
+      { text: "and is showing as available again.", startTime: 95.5 },
+      { text: "Could you give your card another tap for me?", startTime: 97.5 },
+      { text: "It should authorize straight away now.", startTime: 100.0 },
     ]
   },
   {
     id: "10",
     role: "driver",
     phrases: [
-      { text: "Yeah, let me try that.", startTime: 100.5 },
-      { text: "Okay, oh yeah, it's worked.", startTime: 103.0 },
-      { text: "It says preparing,", startTime: 105.5 },
-      { text: "and it sounds like the cable's locked,", startTime: 107.5 },
-      { text: "so I think we're good. Thank you.", startTime: 109.5 },
+      { text: "Yeah, let me try that.", startTime: 102.0 },
+      { text: "Okay, oh yeah, it's worked.", startTime: 104.5 },
+      { text: "It says preparing,", startTime: 107.0 },
+      { text: "and it sounds like the cable's locked,", startTime: 109.0 },
+      { text: "so I think we're good. Thank you.", startTime: 111.0 },
     ]
   },
   {
     id: "11",
     role: "amelia",
     phrases: [
-      { text: "You're very welcome.", startTime: 112.0 },
-      { text: "I can see the session has successfully initialized", startTime: 114.0 },
-      { text: "on my end, too.", startTime: 117.0 },
-      { text: "Is there anything else I can help you with today?", startTime: 118.5 },
+      { text: "You're very welcome.", startTime: 113.5 },
+      { text: "I can see the session has successfully initialized", startTime: 115.5 },
+      { text: "on my end, too.", startTime: 118.5 },
+      { text: "Is there anything else I can help you with today?", startTime: 120.0 },
     ]
   },
   {
     id: "12",
     role: "driver",
     phrases: [
-      { text: "No, that's it.", startTime: 121.0 },
-      { text: "Thanks for everything.", startTime: 123.0 },
+      { text: "No, that's it.", startTime: 122.5 },
+      { text: "Thanks for everything.", startTime: 124.5 },
     ]
   },
   {
     id: "13",
     role: "amelia",
     phrases: [
-      { text: "No problem at all.", startTime: 126.0 },
-      { text: "Have a lovely day,", startTime: 128.0 },
-      { text: "and enjoy the rest of your drive.", startTime: 130.0 },
+      { text: "No problem at all.", startTime: 127.5 },
+      { text: "Have a lovely day,", startTime: 129.5 },
+      { text: "and enjoy the rest of your drive.", startTime: 131.5 },
     ]
   }
 ];
@@ -224,32 +224,32 @@ const STATUS_MESSAGES = [
   "Issue resolved"
 ];
 
-// Timeline step triggers - when each step activates (AFTER speech, synced to new timestamps)
+// Timeline step triggers - when each step activates (AFTER speech, synced to +1.5s global offset)
 const STEP_TRIGGERS: { stepId: string; activateAt: number; completeAt: number }[] = [
-  { stepId: "1", activateAt: 4.8, completeAt: 11.5 },    // Call connected
-  { stepId: "2", activateAt: 11.5, completeAt: 26 },     // Issue reported
-  { stepId: "3", activateAt: 26, completeAt: 35.5 },     // Location confirmed
-  { stepId: "4", activateAt: 35.5, completeAt: 40 },     // Charger ID verified
-  { stepId: "5", activateAt: 44.5, completeAt: 52 },     // Diagnostics run
-  { stepId: "6", activateAt: 54, completeAt: 64 },       // Reset triggered
-  { stepId: "7", activateAt: 71.5, completeAt: 80 },     // Upsell offered
-  { stepId: "8", activateAt: 94, completeAt: 100.5 },    // Charger available
-  { stepId: "9", activateAt: 105.5, completeAt: 135 },   // Session started
+  { stepId: "1", activateAt: 6.3, completeAt: 13.0 },    // Call connected
+  { stepId: "2", activateAt: 13.0, completeAt: 27.5 },   // Issue reported
+  { stepId: "3", activateAt: 27.5, completeAt: 37.0 },   // Location confirmed
+  { stepId: "4", activateAt: 37.0, completeAt: 41.5 },   // Charger ID verified
+  { stepId: "5", activateAt: 46.0, completeAt: 53.5 },   // Diagnostics run
+  { stepId: "6", activateAt: 55.5, completeAt: 65.5 },   // Reset triggered
+  { stepId: "7", activateAt: 73.0, completeAt: 81.5 },   // Upsell offered
+  { stepId: "8", activateAt: 95.5, completeAt: 102.0 },  // Charger available
+  { stepId: "9", activateAt: 107.0, completeAt: 136.5 }, // Session started
 ];
 
-// Status update triggers - appear AFTER Amelia references each action
+// Status update triggers - appear AFTER Amelia references each action (+1.5s global offset)
 const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
-  { statusIndex: 1, time: 10.5 },  // "Listening to driver" - after "How can I help you today?" (9.2s)
-  { statusIndex: 2, time: 25.5 },  // "Understanding the issue" - after driver finishes explaining (23.5s)
-  { statusIndex: 3, time: 29.0 },  // "Locating charger station" - after "Let me look into that" (28.2s)
-  { statusIndex: 4, time: 38.5 },  // "Charger MH-102-B identified" - after driver confirms ID (37.5s)
-  { statusIndex: 5, time: 45.5 },  // "Running remote diagnostics" - after "run a diagnostic" (44.5s)
-  { statusIndex: 6, time: 48.0 },  // "Card reader unresponsive" - after "card reader module is frozen" (46.5s)
-  { statusIndex: 7, time: 55.0 },  // "Resetting payment module" - after "trigger a remote reset" (52.0s)
-  { statusIndex: 8, time: 73.0 },  // "Discount offer presented" - after "35% discount" (71.5s)
-  { statusIndex: 9, time: 95.0 },  // "Charger available again" - after "available again" (94.0s)
-  { statusIndex: 10, time: 104.0 },// "Charging session confirmed" - after "it's worked" (103.0s)
-  { statusIndex: 11, time: 127.0 },// "Issue resolved" - after "No problem at all" (126.0s)
+  { statusIndex: 1, time: 12.0 },  // "Listening to driver" - after "How can I help you today?"
+  { statusIndex: 2, time: 27.0 },  // "Understanding the issue" - after driver finishes explaining
+  { statusIndex: 3, time: 30.5 },  // "Locating charger station" - after "Let me look into that"
+  { statusIndex: 4, time: 40.0 },  // "Charger MH-102-B identified" - after driver confirms ID
+  { statusIndex: 5, time: 47.0 },  // "Running remote diagnostics" - after "run a diagnostic"
+  { statusIndex: 6, time: 49.5 },  // "Card reader unresponsive" - after "card reader module is frozen"
+  { statusIndex: 7, time: 56.5 },  // "Resetting payment module" - after "trigger a remote reset"
+  { statusIndex: 8, time: 74.5 },  // "Discount offer presented" - after "35% discount"
+  { statusIndex: 9, time: 96.5 },  // "Charger available again" - after "available again"
+  { statusIndex: 10, time: 105.5 },// "Charging session confirmed" - after "it's worked"
+  { statusIndex: 11, time: 128.5 },// "Issue resolved" - after "No problem at all"
 ];
 
 // Current phrase display state - strict lifecycle: Hidden → Active → Completed
