@@ -66,29 +66,29 @@ const CONVERSATION: Message[] = [
 ];
 
 const createInitialSteps = (): TimelineStep[] => [
-  { id: "1", label: "Incoming request", detail: "Driver support request detected", status: "pending" },
-  { id: "2", label: "Location detected", detail: "Market Harborough, Church Street", status: "pending" },
-  { id: "3", label: "Charger ID confirmed", detail: "MH-102-B", status: "pending" },
-  { id: "4", label: "Diagnostic complete", detail: "Charger healthy, reader frozen", status: "pending" },
-  { id: "5", label: "Remote reset initiated", detail: "Card reader module rebooting", status: "pending" },
-  { id: "6", label: "Value opportunity", detail: "35% off-peak app discount identified", status: "pending", isValueMoment: true },
-  { id: "7", label: "Reader available", detail: "Reboot complete, system ready", status: "pending" },
-  { id: "8", label: "Session initialized", detail: "Charging session active", status: "pending" }
+  { id: "1", label: "Request received", detail: "", status: "pending" },
+  { id: "2", label: "Location identified", detail: "", status: "pending" },
+  { id: "3", label: "Charger confirmed", detail: "MH-102-B", status: "pending" },
+  { id: "4", label: "Diagnostics run", detail: "", status: "pending" },
+  { id: "5", label: "Reset triggered", detail: "", status: "pending" },
+  { id: "6", label: "Upsell offered", detail: "35% discount", status: "pending", isValueMoment: true },
+  { id: "7", label: "Charger available", detail: "", status: "pending" },
+  { id: "8", label: "Session started", detail: "", status: "pending" }
 ];
 
 const STATUS_MESSAGES = [
-  "Listening for requests...",
-  "Incoming driver request detected",
-  "Identifying charger location",
-  "Location: Market Harborough confirmed",
-  "Charger ID: MH-102-B confirmed",
-  "Running remote diagnostics...",
-  "Diagnostic: Card reader frozen",
-  "Triggering remote reset...",
-  "Monitoring reboot (45s)",
-  "Identifying revenue opportunity",
-  "Charger available",
-  "Session confirmed"
+  "Listening...",
+  "Request received",
+  "Locating charger",
+  "Market Harborough",
+  "MH-102-B",
+  "Running diagnostics",
+  "Reader frozen",
+  "Resetting...",
+  "Rebooting",
+  "Upsell opportunity",
+  "Available",
+  "Session active"
 ];
 
 export interface SequenceAction {
@@ -136,10 +136,11 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio
+  // Initialize audio - ensure it's loud and foreground
   useEffect(() => {
     audioRef.current = new Audio("/audio/demo-conversation.m4a");
     audioRef.current.preload = "auto";
+    audioRef.current.volume = 1.0; // Full volume
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
