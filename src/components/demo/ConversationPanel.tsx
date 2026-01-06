@@ -1,47 +1,34 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./ChatMessage";
 import AudioVisualizer from "./AudioVisualizer";
+import { CurrentPhraseState } from "@/hooks/useDemoSequence";
 
 interface ConversationPanelProps {
   messages: Message[];
   isFullscreen?: boolean;
   audioRef?: React.RefObject<HTMLAudioElement | null>;
   isPlaying?: boolean;
-  revealProgress?: number;
+  currentPhrase?: CurrentPhraseState;
 }
-
-// Split long text into readable chunks (2-4 lines each)
-const chunkText = (text: string, maxWordsPerChunk: number = 12): string[] => {
-  const words = text.split(" ");
-  if (words.length <= maxWordsPerChunk) return [text];
-  
-  const chunks: string[] = [];
-  for (let i = 0; i < words.length; i += maxWordsPerChunk) {
-    chunks.push(words.slice(i, i + maxWordsPerChunk).join(" "));
-  }
-  return chunks;
-};
 
 const ConversationPanel = ({ 
   messages, 
   isFullscreen = false,
   audioRef,
   isPlaying = false,
-  revealProgress = 1
+  currentPhrase
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [prevSpeaker, setPrevSpeaker] = useState<string | null>(null);
   const [speakerChangeKey, setSpeakerChangeKey] = useState(0);
 
-  const currentMessage = messages[messages.length - 1];
-  const currentSpeaker = currentMessage?.role;
+  const currentSpeaker = currentPhrase?.role;
+  const hasContent = currentPhrase && currentPhrase.visiblePhrases.length > 0;
   
   // Track speaker changes for transition effects
-  const isSpeakerChange = prevSpeaker !== null && prevSpeaker !== currentSpeaker;
-  
   useEffect(() => {
     if (currentSpeaker && currentSpeaker !== prevSpeaker) {
       setPrevSpeaker(currentSpeaker);
@@ -56,80 +43,66 @@ const ConversationPanel = ({
         behavior: "smooth",
       });
     }
-  }, [messages]);
+  }, [currentPhrase?.visiblePhrases.length]);
 
-  // Calculate revealed text based on progress
-  const revealedContent = useMemo(() => {
-    if (!currentMessage) return { chunks: [], currentChunkIndex: 0, chunkProgress: 0 };
-    
-    const chunks = chunkText(currentMessage.content, 14);
-    const totalChunks = chunks.length;
-    
-    // Calculate which chunk and how much of it to show
-    const exactPosition = revealProgress * totalChunks;
-    const currentChunkIndex = Math.min(Math.floor(exactPosition), totalChunks - 1);
-    const chunkProgress = exactPosition - currentChunkIndex;
-    
-    return { chunks, currentChunkIndex, chunkProgress };
-  }, [currentMessage, revealProgress]);
-
-  // Get words to reveal in current chunk with highlight info
-  const getRevealedWords = (chunk: string, progress: number, isAmelia: boolean): { 
-    wordsBeforeHighlight: string; 
-    highlightWord: string; 
-    cursor: boolean;
-  } => {
-    const words = chunk.split(" ");
-    const wordsToShow = Math.ceil(progress * words.length);
-    const revealedWords = words.slice(0, wordsToShow);
-    const cursor = progress < 1 && progress > 0;
-    
-    // Split into words before highlight and the highlight word
-    if (revealedWords.length === 0) {
-      return { wordsBeforeHighlight: "", highlightWord: "", cursor };
-    }
-    
-    const highlightWord = revealedWords[revealedWords.length - 1];
-    const wordsBeforeHighlight = revealedWords.slice(0, -1).join(" ");
-    
-    return { wordsBeforeHighlight, highlightWord, cursor };
-  };
-
-  // Animation variants for smooth speaker transitions
-  const messageVariants = {
-    initial: (isAmelia: boolean) => ({
-      opacity: 0,
-      x: isAmelia ? 20 : -20,
-      scale: 0.97,
-    }),
-    animate: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
+  // Kinetic caption animation - subtle pop with micro-bounce
+  const phraseVariants = {
+    initial: { 
+      opacity: 0, 
+      y: 6,
+      scale: 0.98
     },
-    exit: (isAmelia: boolean) => ({
-      opacity: 0,
-      x: isAmelia ? -10 : 10,
-      scale: 0.98,
-    }),
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.25,
+        ease: [0.25, 0.1, 0.25, 1.0] as const,
+      }
+    },
+    exit: { 
+      opacity: 0.4,
+      transition: { duration: 0.15 }
+    }
   };
+
+  // Latest phrase gets subtle emphasis
+  const latestPhraseVariants = {
+    initial: { 
+      opacity: 0, 
+      y: 8,
+      scale: 0.96
+    },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.3,
+        ease: [0.34, 1.56, 0.64, 1] as const,
+      }
+    }
+  };
+
+  const isAmelia = currentPhrase?.role === "amelia";
 
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
       {/* Border pulse effect on speaker change */}
       <AnimatePresence>
-        {currentMessage && (
+        {hasContent && (
           <motion.div
             key={`border-pulse-${speakerChangeKey}`}
             className={cn(
               "absolute inset-0 rounded-xl pointer-events-none z-10",
-              currentMessage.role === "amelia" 
-                ? "ring-2 ring-enera-brand/40" 
-                : "ring-2 ring-muted-foreground/30"
+              isAmelia 
+                ? "ring-2 ring-enera-brand/30" 
+                : "ring-2 ring-muted-foreground/20"
             )}
-            initial={{ opacity: 0.8, scale: 1 }}
-            animate={{ opacity: 0, scale: 1.01 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            initial={{ opacity: 0.6, scale: 1 }}
+            animate={{ opacity: 0, scale: 1.005 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           />
         )}
       </AnimatePresence>
@@ -146,7 +119,7 @@ const ConversationPanel = ({
                 "text-enera-brand",
                 isFullscreen ? "w-3.5 h-3.5" : "w-3 h-3"
               )} />
-              {messages.length > 0 && (
+              {hasContent && (
                 <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-success rounded-full" />
               )}
             </div>
@@ -169,7 +142,7 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Compact, centered with better padding */}
+      {/* Messages - Kinetic captions */}
       <div
         ref={scrollRef}
         className={cn(
@@ -177,7 +150,8 @@ const ConversationPanel = ({
           isFullscreen ? "px-8 py-6" : "px-6 py-4"
         )}
       >
-        {messages.length === 0 ? (
+        {!hasContent ? (
+          // Empty state - NOTHING during silence
           <motion.div
             className="flex flex-col items-center justify-center text-center"
             initial={{ opacity: 0 }}
@@ -201,153 +175,123 @@ const ConversationPanel = ({
           </motion.div>
         ) : (
           <div className="w-full max-w-md relative">
-            {/* Enhanced background glow - increased intensity */}
+            {/* Enhanced background glow */}
             <AnimatePresence mode="wait">
-              {currentMessage && (
-                <motion.div
-                  key={`glow-${currentMessage.role}-${speakerChangeKey}`}
-                  className={cn(
-                    "absolute -inset-8 -z-10 rounded-3xl blur-3xl pointer-events-none",
-                    currentMessage.role === "amelia" 
-                      ? "bg-enera-brand" 
-                      : "bg-muted-foreground"
-                  )}
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ 
-                    opacity: currentMessage.role === "amelia" ? 0.25 : 0.15,
-                    scale: 1.1,
-                    x: currentMessage.role === "amelia" ? "15%" : "-15%"
-                  }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              )}
+              <motion.div
+                key={`glow-${currentPhrase?.role}-${speakerChangeKey}`}
+                className={cn(
+                  "absolute -inset-8 -z-10 rounded-3xl blur-3xl pointer-events-none",
+                  isAmelia 
+                    ? "bg-enera-brand" 
+                    : "bg-muted-foreground"
+                )}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ 
+                  opacity: isAmelia ? 0.2 : 0.12,
+                  scale: 1.1,
+                  x: isAmelia ? "12%" : "-12%"
+                }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
             </AnimatePresence>
 
-            <AnimatePresence mode="wait" initial={false}>
-              {currentMessage && (
-                <motion.div
-                  key={currentMessage.id}
-                  custom={currentMessage.role === "amelia"}
-                  variants={messageVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ 
-                    duration: isSpeakerChange ? 0.4 : 0.25,
-                    ease: [0.4, 0, 0.2, 1],
-                  }}
+            {/* Active message with kinetic phrases */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPhrase?.messageId}
+                initial={{ opacity: 0, x: isAmelia ? 15 : -15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isAmelia ? -10 : 10 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              >
+                {/* Speaker Label */}
+                <motion.div 
+                  className={cn(
+                    "flex items-center gap-1.5 mb-2",
+                    isAmelia ? "justify-end" : "justify-start"
+                  )}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.05, duration: 0.2 }}
                 >
-                  {/* Speaker Label with fade */}
-                  <motion.div 
-                    className={cn(
-                      "flex items-center gap-1.5 mb-2",
-                      currentMessage.role === "amelia" ? "justify-end" : "justify-start"
-                    )}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                  <span className={cn(
+                    "text-[10px] uppercase tracking-widest font-semibold",
+                    isAmelia ? "text-enera-brand" : "text-muted-foreground/60"
+                  )}>
+                    {isAmelia ? "Amelia" : "Driver"}
+                  </span>
+                  <motion.span 
+                    className="flex gap-0.5"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1, duration: 0.2 }}
                   >
                     <span className={cn(
-                      "text-[10px] uppercase tracking-widest font-semibold transition-colors duration-300",
-                      currentMessage.role === "amelia" ? "text-enera-brand" : "text-muted-foreground/60"
-                    )}>
-                      {currentMessage.role === "amelia" ? "Amelia" : "Driver"}
-                    </span>
-                    <motion.span 
-                      className="flex gap-0.5"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.15, duration: 0.2 }}
-                    >
-                      <span className={cn(
+                      "w-1.5 h-1.5 rounded-full animate-pulse",
+                      isAmelia ? "bg-enera-brand/80" : "bg-muted-foreground/40"
+                    )} />
+                    <span 
+                      className={cn(
                         "w-1.5 h-1.5 rounded-full animate-pulse",
-                        currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
-                      )} />
-                      <span 
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full animate-pulse",
-                          currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
-                        )} 
-                        style={{ animationDelay: "150ms" }} 
-                      />
-                    </motion.span>
-                  </motion.div>
+                        isAmelia ? "bg-enera-brand/80" : "bg-muted-foreground/40"
+                      )} 
+                      style={{ animationDelay: "150ms" }} 
+                    />
+                  </motion.span>
+                </motion.div>
 
-                  {/* Progressive Text Reveal - Chunked */}
-                  <div className="space-y-2">
-                    {revealedContent.chunks.map((chunk, idx) => {
-                      // Determine visibility and progress for this chunk
-                      const isCompleted = idx < revealedContent.currentChunkIndex;
-                      const isCurrent = idx === revealedContent.currentChunkIndex;
-                      const isHidden = idx > revealedContent.currentChunkIndex;
-                      const isAmelia = currentMessage.role === "amelia";
-                      
-                      if (isHidden) return null;
-                      
-                      const { wordsBeforeHighlight, highlightWord, cursor } = isCurrent 
-                        ? getRevealedWords(chunk, revealedContent.chunkProgress, isAmelia)
-                        : { wordsBeforeHighlight: chunk, highlightWord: "", cursor: false };
-                      
-                      if (!wordsBeforeHighlight && !highlightWord && isCurrent) return null;
-                      
-                      return (
-                        <motion.p 
-                          key={`chunk-${idx}`}
-                          className={cn(
-                            "leading-relaxed font-medium transition-opacity duration-200",
-                            isFullscreen ? "text-xl" : "text-lg",
-                            isAmelia 
-                              ? "text-right text-foreground" 
-                              : "text-left text-foreground/90",
-                            isCompleted && "opacity-60"
-                          )}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: isCompleted ? 0.6 : 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                        >
-                          {wordsBeforeHighlight}
-                          {wordsBeforeHighlight && highlightWord && " "}
-                          {highlightWord && isCurrent && (
+                {/* Kinetic Phrase Display - only show last 2-3 phrases */}
+                <div className={cn(
+                  "space-y-1",
+                  isAmelia ? "text-right" : "text-left"
+                )}>
+                  {currentPhrase?.visiblePhrases.slice(-3).map((phrase, idx) => {
+                    const actualIdx = (currentPhrase?.visiblePhrases.length ?? 0) - 3 + idx;
+                    const isLatest = actualIdx === currentPhrase?.latestPhraseIndex;
+                    const isOlder = actualIdx < (currentPhrase?.latestPhraseIndex ?? 0);
+                    
+                    return (
+                      <motion.p
+                        key={`${currentPhrase?.messageId}-${actualIdx}`}
+                        className={cn(
+                          "leading-relaxed font-medium",
+                          isFullscreen ? "text-xl" : "text-lg",
+                          isAmelia ? "text-foreground" : "text-foreground/90",
+                          isOlder && "opacity-50"
+                        )}
+                        variants={isLatest ? latestPhraseVariants : phraseVariants}
+                        initial="initial"
+                        animate="animate"
+                      >
+                        {isLatest ? (
+                          // Latest phrase with subtle highlight
+                          <motion.span
+                            className="relative inline"
+                            initial={{ opacity: 0.7 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            {phrase}
+                            {/* Subtle glow on latest phrase */}
                             <motion.span
-                              key={highlightWord}
                               className={cn(
-                                "relative inline-block",
-                                isAmelia ? "text-enera-brand" : "text-foreground"
+                                "absolute -inset-1 -z-10 blur-md rounded-lg",
+                                isAmelia ? "bg-enera-brand/15" : "bg-foreground/5"
                               )}
                               initial={{ opacity: 0.5, scale: 1.05 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.15 }}
-                            >
-                              {highlightWord}
-                              {/* Subtle glow behind highlighted word */}
-                              <motion.span
-                                className={cn(
-                                  "absolute inset-0 -z-10 blur-sm rounded",
-                                  isAmelia ? "bg-enera-brand/20" : "bg-foreground/10"
-                                )}
-                                initial={{ opacity: 0.8 }}
-                                animate={{ opacity: 0 }}
-                                transition={{ duration: 0.4 }}
-                              />
-                            </motion.span>
-                          )}
-                          {cursor && (
-                            <motion.span
-                              className={cn(
-                                "inline-block w-0.5 h-5 ml-0.5 align-middle rounded-full",
-                                isAmelia ? "bg-enera-brand" : "bg-muted-foreground"
-                              )}
-                              animate={{ opacity: [1, 0.3, 1] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
+                              animate={{ opacity: 0, scale: 1 }}
+                              transition={{ duration: 0.6 }}
                             />
-                          )}
-                        </motion.p>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
+                          </motion.span>
+                        ) : (
+                          phrase
+                        )}
+                      </motion.p>
+                    );
+                  })}
+                </div>
+              </motion.div>
             </AnimatePresence>
           </div>
         )}

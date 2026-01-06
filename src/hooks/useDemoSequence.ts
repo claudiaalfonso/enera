@@ -2,74 +2,164 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Message } from "@/components/demo/ChatMessage";
 import { TimelineStep } from "@/components/demo/TimelineItem";
 
-// Script matched EXACTLY to the recording timestamps
-const CONVERSATION: Message[] = [
+// Phrase segments with exact timestamps for kinetic captions
+// Each phrase is timed to appear exactly when spoken
+export interface PhraseSegment {
+  text: string;
+  startTime: number; // When this phrase starts in audio
+}
+
+export interface TimedMessage {
+  id: string;
+  role: "driver" | "amelia";
+  phrases: PhraseSegment[];
+}
+
+// Phrase-level transcript with exact audio timestamps
+const TIMED_TRANSCRIPT: TimedMessage[] = [
   {
     id: "1",
     role: "amelia",
-    content: "Hello, my name is Amelia, and I'm with Enera Support. How can I help you today?"
+    phrases: [
+      { text: "Hello, my name is Amelia,", startTime: 3.0 },
+      { text: "and I'm with Enera Support.", startTime: 5.2 },
+      { text: "How can I help you today?", startTime: 7.5 },
+    ]
   },
   {
     id: "2",
     role: "driver",
-    content: "Hi, I'm trying to use the charger at the Church Street car park in Market Harborough, but I'm not having much luck. I've tried tapping my contactless card a few times now, and it looks like the screen isn't changing at all."
+    phrases: [
+      { text: "Hi, I'm trying to use the charger", startTime: 11.0 },
+      { text: "at the Church Street car park", startTime: 13.5 },
+      { text: "in Market Harborough,", startTime: 15.8 },
+      { text: "but I'm not having much luck.", startTime: 17.5 },
+      { text: "I've tried tapping my contactless card", startTime: 19.5 },
+      { text: "a few times now,", startTime: 21.8 },
+      { text: "and it looks like the screen isn't changing at all.", startTime: 23.0 },
+    ]
   },
   {
     id: "3",
     role: "amelia",
-    content: "I'm sorry you're having trouble. Let me look into that for you. You're in Market Harborough. Can you just confirm the charger ID is MH-102-B?"
+    phrases: [
+      { text: "I'm sorry you're having trouble.", startTime: 25.0 },
+      { text: "Let me look into that for you.", startTime: 27.2 },
+      { text: "You're in Market Harborough.", startTime: 29.5 },
+      { text: "Can you just confirm the charger ID", startTime: 31.0 },
+      { text: "is MH-102-B?", startTime: 33.0 },
+    ]
   },
   {
     id: "4",
     role: "driver",
-    content: "Yeah, that's the one. MH-102-B."
+    phrases: [
+      { text: "Yeah, that's the one.", startTime: 34.0 },
+      { text: "MH-102-B.", startTime: 36.5 },
+    ]
   },
   {
     id: "5",
     role: "amelia",
-    content: "Perfect, thanks. Let me just look into what's happening there. I've just run a diagnostic, and it looks like the card reader module is frozen, although the charger itself is healthy. I'm going to trigger a remote reset on the reader for you now. It should take about 45 seconds to reboot and come back online."
+    phrases: [
+      { text: "Perfect, thanks.", startTime: 39.0 },
+      { text: "Let me just look into what's happening there.", startTime: 40.5 },
+      { text: "I've just run a diagnostic,", startTime: 43.5 },
+      { text: "and it looks like the card reader module is frozen,", startTime: 45.5 },
+      { text: "although the charger itself is healthy.", startTime: 48.5 },
+      { text: "I'm going to trigger a remote reset", startTime: 51.0 },
+      { text: "on the reader for you now.", startTime: 53.0 },
+      { text: "It should take about 45 seconds", startTime: 55.0 },
+      { text: "to reboot and come back online.", startTime: 57.0 },
+    ]
   },
   {
     id: "6",
     role: "driver",
-    content: "Great, okay, I'll hang on."
+    phrases: [
+      { text: "Great, okay, I'll hang on.", startTime: 58.0 },
+    ]
   },
   {
     id: "7",
     role: "amelia",
-    content: "While we're waiting for that to cycle, I noticed you're using a guest payment. Did you know that if you used our app, you'd actually get a 35% discount for charging during this off-peak window? It's a fair bit cheaper than the standard contactless rate."
+    phrases: [
+      { text: "While we're waiting for that to cycle,", startTime: 63.0 },
+      { text: "I noticed you're using a guest payment.", startTime: 65.5 },
+      { text: "Did you know that if you used our app,", startTime: 68.0 },
+      { text: "you'd actually get a 35% discount", startTime: 70.5 },
+      { text: "for charging during this off-peak window?", startTime: 73.0 },
+      { text: "It's a fair bit cheaper", startTime: 75.5 },
+      { text: "than the standard contactless rate.", startTime: 77.0 },
+    ]
   },
   {
     id: "8",
     role: "driver",
-    content: "Oh, interesting. I wasn't aware of that. I will give the app a go next time. Thanks."
+    phrases: [
+      { text: "Oh, interesting.", startTime: 78.0 },
+      { text: "I wasn't aware of that.", startTime: 80.0 },
+      { text: "I will give the app a go next time.", startTime: 82.0 },
+      { text: "Thanks.", startTime: 84.5 },
+    ]
   },
   {
     id: "9",
     role: "amelia",
-    content: "It's definitely worth it for the savings. Okay, the card reader has finished rebooting and is showing as available again. Could you give your card another tap for me? It should authorize straight away now."
+    phrases: [
+      { text: "It's definitely worth it for the savings.", startTime: 86.0 },
+      { text: "Okay, the card reader has finished rebooting", startTime: 89.0 },
+      { text: "and is showing as available again.", startTime: 92.0 },
+      { text: "Could you give your card another tap for me?", startTime: 94.0 },
+      { text: "It should authorize straight away now.", startTime: 96.5 },
+    ]
   },
   {
     id: "10",
     role: "driver",
-    content: "Yeah, let me try that. Okay, oh yeah, it's worked. It says preparing, and it sounds like the cable's locked, so I think we're good. Thank you."
+    phrases: [
+      { text: "Yeah, let me try that.", startTime: 98.0 },
+      { text: "Okay, oh yeah, it's worked.", startTime: 100.5 },
+      { text: "It says preparing,", startTime: 103.0 },
+      { text: "and it sounds like the cable's locked,", startTime: 105.0 },
+      { text: "so I think we're good. Thank you.", startTime: 107.0 },
+    ]
   },
   {
     id: "11",
     role: "amelia",
-    content: "You're very welcome. I can see the session has successfully initialized on my end, too. Is there anything else I can help you with today?"
+    phrases: [
+      { text: "You're very welcome.", startTime: 109.0 },
+      { text: "I can see the session has successfully initialized", startTime: 111.0 },
+      { text: "on my end, too.", startTime: 114.0 },
+      { text: "Is there anything else I can help you with today?", startTime: 115.5 },
+    ]
   },
   {
     id: "12",
     role: "driver",
-    content: "No, that's it. Thanks for everything."
+    phrases: [
+      { text: "No, that's it.", startTime: 117.0 },
+      { text: "Thanks for everything.", startTime: 119.0 },
+    ]
   },
   {
     id: "13",
     role: "amelia",
-    content: "No problem at all. Have a lovely day, and enjoy the rest of your drive."
+    phrases: [
+      { text: "No problem at all.", startTime: 123.0 },
+      { text: "Have a lovely day,", startTime: 125.0 },
+      { text: "and enjoy the rest of your drive.", startTime: 127.0 },
+    ]
   }
 ];
+
+// Build flat message array for compatibility
+const CONVERSATION: Message[] = TIMED_TRANSCRIPT.map(tm => ({
+  id: tm.id,
+  role: tm.role,
+  content: tm.phrases.map(p => p.text).join(" ")
+}));
 
 const createInitialSteps = (): TimelineStep[] => [
   { id: "1", label: "Call connected", detail: "", status: "pending" },
@@ -84,7 +174,7 @@ const createInitialSteps = (): TimelineStep[] => [
 ];
 
 const STATUS_MESSAGES = [
-  "Listening...",
+  "", // Empty - nothing during silence
   "Call connected",
   "Issue received",
   "Locating charger",
@@ -98,52 +188,48 @@ const STATUS_MESSAGES = [
   "Call complete"
 ];
 
-export interface SequenceAction {
-  messageIndex: number | null;
-  statusIndex: number;
-  stepUpdates: { id: string; status: "active" | "completed" }[];
-  audioTime: number;
-  // Duration for this message (calculated from next message start)
-  duration?: number;
-}
+// Timeline step triggers - when each step activates (AFTER Amelia says it)
+const STEP_TRIGGERS: { stepId: string; activateAt: number; completeAt: number }[] = [
+  { stepId: "1", activateAt: 3, completeAt: 11 },      // Call connected
+  { stepId: "2", activateAt: 11, completeAt: 25 },     // Issue reported
+  { stepId: "3", activateAt: 25, completeAt: 34 },     // Location confirmed
+  { stepId: "4", activateAt: 34, completeAt: 39 },     // Charger ID verified
+  { stepId: "5", activateAt: 43, completeAt: 51 },     // Diagnostics run (after Amelia says it)
+  { stepId: "6", activateAt: 53, completeAt: 63 },     // Reset triggered
+  { stepId: "7", activateAt: 70, completeAt: 78 },     // Upsell offered (after discount mentioned)
+  { stepId: "8", activateAt: 92, completeAt: 98 },     // Charger available
+  { stepId: "9", activateAt: 103, completeAt: 130 },   // Session started
+];
 
-// Timestamps matched EXACTLY to audio recording
-// IMPORTANT: First speech starts at ~3s (there's noise before that)
-const SEQUENCE: SequenceAction[] = [
-  // 3s - Amelia intro (first actual speech, after initial noise)
-  { messageIndex: 0, statusIndex: 1, stepUpdates: [{ id: "1", status: "active" }], audioTime: 3, duration: 8 },
-  // 11s - Driver reports issue
-  { messageIndex: 1, statusIndex: 2, stepUpdates: [{ id: "1", status: "completed" }, { id: "2", status: "active" }], audioTime: 11, duration: 14 },
-  // 25s - Amelia asks for charger ID
-  { messageIndex: 2, statusIndex: 3, stepUpdates: [{ id: "2", status: "completed" }, { id: "3", status: "active" }], audioTime: 25, duration: 9 },
-  // 34s - Driver confirms ID
-  { messageIndex: 3, statusIndex: 4, stepUpdates: [{ id: "3", status: "completed" }, { id: "4", status: "active" }], audioTime: 34, duration: 5 },
-  // 39s - Amelia runs diagnostic, triggers reset
-  { messageIndex: 4, statusIndex: 5, stepUpdates: [{ id: "4", status: "completed" }, { id: "5", status: "active" }], audioTime: 39, duration: 19 },
-  // 58s - Driver acknowledges
-  { messageIndex: 5, statusIndex: 7, stepUpdates: [{ id: "5", status: "completed" }, { id: "6", status: "active" }], audioTime: 58, duration: 5 },
-  // 63s - Amelia offers upsell
-  { messageIndex: 6, statusIndex: 8, stepUpdates: [{ id: "6", status: "completed" }, { id: "7", status: "active" }], audioTime: 63, duration: 15 },
-  // 78s - Driver interested in app
-  { messageIndex: 7, statusIndex: 8, stepUpdates: [{ id: "7", status: "completed" }], audioTime: 78, duration: 8 },
-  // 86s - Amelia confirms charger ready
-  { messageIndex: 8, statusIndex: 9, stepUpdates: [{ id: "8", status: "active" }], audioTime: 86, duration: 12 },
-  // 98s - Driver confirms it worked
-  { messageIndex: 9, statusIndex: 10, stepUpdates: [{ id: "8", status: "completed" }, { id: "9", status: "active" }], audioTime: 98, duration: 11 },
-  // 109s - Amelia confirms session
-  { messageIndex: 10, statusIndex: 10, stepUpdates: [{ id: "9", status: "completed" }], audioTime: 109, duration: 8 },
-  // 117s - Driver says goodbye
-  { messageIndex: 11, statusIndex: 11, stepUpdates: [], audioTime: 117, duration: 6 },
-  // 123s - Amelia closing
-  { messageIndex: 12, statusIndex: 11, stepUpdates: [], audioTime: 123, duration: 7 }
+// Status update triggers
+const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
+  { statusIndex: 1, time: 3 },    // Call connected
+  { statusIndex: 2, time: 11 },   // Issue received
+  { statusIndex: 3, time: 25 },   // Locating charger
+  { statusIndex: 4, time: 34 },   // MH-102-B confirmed
+  { statusIndex: 5, time: 43 },   // Running diagnostics
+  { statusIndex: 6, time: 48 },   // Reader frozen
+  { statusIndex: 7, time: 53 },   // Resetting reader
+  { statusIndex: 8, time: 70 },   // Upsell opportunity
+  { statusIndex: 9, time: 92 },   // Charger available
+  { statusIndex: 10, time: 103 }, // Session active
+  { statusIndex: 11, time: 123 }, // Call complete
 ];
 
 export type PlayMode = "auto" | "manual";
 
+// Current phrase display state
+export interface CurrentPhraseState {
+  messageId: string | null;
+  role: "driver" | "amelia" | null;
+  visiblePhrases: string[]; // Phrases currently visible
+  latestPhraseIndex: number; // Index of the most recent phrase (for highlighting)
+}
+
 export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [steps, setSteps] = useState<TimelineStep[]>(createInitialSteps());
-  const [currentStatus, setCurrentStatus] = useState(STATUS_MESSAGES[0]);
+  const [currentStatus, setCurrentStatus] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -151,13 +237,18 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [hasStarted, setHasStarted] = useState(false);
-  const [revealProgress, setRevealProgress] = useState(0); // 0-1 progress for current message reveal
-  const [currentMessageStartTime, setCurrentMessageStartTime] = useState(0);
-  const [currentMessageDuration, setCurrentMessageDuration] = useState(0);
   
-  const sequenceIndexRef = useRef(-1);
+  // Phrase-level state for kinetic captions
+  const [currentPhrase, setCurrentPhrase] = useState<CurrentPhraseState>({
+    messageId: null,
+    role: null,
+    visiblePhrases: [],
+    latestPhraseIndex: -1
+  });
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
 
   // Initialize audio
   useEffect(() => {
@@ -186,46 +277,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     };
   }, []);
 
-  const applyStepState = useCallback((idx: number) => {
-    if (idx < 0 || idx >= SEQUENCE.length) return;
-    
-    const action = SEQUENCE[idx];
-    
-    setCurrentStatus(STATUS_MESSAGES[action.statusIndex]);
-    setIsProcessing(true);
-    
-    // Set timing for progressive reveal
-    setCurrentMessageStartTime(action.audioTime);
-    setCurrentMessageDuration(action.duration || 5);
-    setRevealProgress(0);
-
-    // Build messages up to this step
-    const messagesUpToStep: Message[] = [];
-    for (let i = 0; i <= idx; i++) {
-      const msgIdx = SEQUENCE[i].messageIndex;
-      if (msgIdx !== null) {
-        messagesUpToStep.push(CONVERSATION[msgIdx]);
-      }
-    }
-    setMessages(messagesUpToStep);
-
-    // Build timeline state up to this step
-    const newSteps = createInitialSteps();
-    for (let i = 0; i <= idx; i++) {
-      SEQUENCE[i].stepUpdates.forEach(update => {
-        const stepIndex = newSteps.findIndex(s => s.id === update.id);
-        if (stepIndex !== -1) {
-          newSteps[stepIndex] = { ...newSteps[stepIndex], status: update.status };
-        }
-      });
-    }
-    setSteps(newSteps);
-    
-    sequenceIndexRef.current = idx;
-    setCurrentStepIndex(idx);
-  }, []);
-
-  // Audio-driven sync loop
+  // Audio-driven sync loop - phrase-level precision
   useEffect(() => {
     if (!hasStarted || !isPlaying || isComplete || playMode !== "auto") return;
 
@@ -233,32 +285,113 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
       if (!audioRef.current) return;
       
       const currentTime = audioRef.current.currentTime;
-      const currentIdx = sequenceIndexRef.current;
       
-      // Find which step we should be on based on audio time
-      let targetIdx = -1;
-      for (let i = SEQUENCE.length - 1; i >= 0; i--) {
-        if (currentTime >= SEQUENCE[i].audioTime) {
-          targetIdx = i;
-          break;
+      // RULE: Before first speech (< 3s), show NOTHING
+      if (currentTime < 3) {
+        setCurrentPhrase({
+          messageId: null,
+          role: null,
+          visiblePhrases: [],
+          latestPhraseIndex: -1
+        });
+        setCurrentStatus("");
+        setMessages([]);
+        rafRef.current = requestAnimationFrame(syncWithAudio);
+        return;
+      }
+      
+      // Find current message and visible phrases based on time
+      let activeMessage: TimedMessage | null = null;
+      let visiblePhrases: string[] = [];
+      let latestPhraseIndex = -1;
+      
+      for (const msg of TIMED_TRANSCRIPT) {
+        const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
+        const lastPhraseTime = msg.phrases[msg.phrases.length - 1]?.startTime ?? 0;
+        
+        // Check if we're within this message's time window
+        if (currentTime >= firstPhraseTime) {
+          // Find which phrases are visible
+          const phrases: string[] = [];
+          let lastVisibleIdx = -1;
+          
+          for (let i = 0; i < msg.phrases.length; i++) {
+            if (currentTime >= msg.phrases[i].startTime) {
+              phrases.push(msg.phrases[i].text);
+              lastVisibleIdx = i;
+            }
+          }
+          
+          if (phrases.length > 0) {
+            activeMessage = msg;
+            visiblePhrases = phrases;
+            latestPhraseIndex = lastVisibleIdx;
+          }
         }
       }
       
-      // Advance if we're behind
-      if (targetIdx > currentIdx) {
-        applyStepState(targetIdx);
+      // Update phrase state
+      if (activeMessage) {
+        setCurrentPhrase({
+          messageId: activeMessage.id,
+          role: activeMessage.role,
+          visiblePhrases,
+          latestPhraseIndex
+        });
+        
+        // Build completed messages (all messages before current)
+        if (activeMessage.id !== lastMessageIdRef.current) {
+          const completedMessages: Message[] = [];
+          for (const msg of TIMED_TRANSCRIPT) {
+            if (msg.id === activeMessage.id) break;
+            const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
+            if (currentTime >= firstPhraseTime) {
+              completedMessages.push({
+                id: msg.id,
+                role: msg.role,
+                content: msg.phrases.map(p => p.text).join(" ")
+              });
+            }
+          }
+          setMessages(completedMessages);
+          lastMessageIdRef.current = activeMessage.id;
+        }
+        
+        setIsProcessing(true);
       }
       
-      // Calculate reveal progress for current message
-      // Speed multiplier: 1.15 = words appear 15% faster than speech duration (feels more natural)
-      const REVEAL_SPEED = 1.15;
-      if (currentIdx >= 0 && currentIdx < SEQUENCE.length) {
-        const action = SEQUENCE[currentIdx];
-        const elapsed = currentTime - action.audioTime;
-        const duration = action.duration || 5;
-        const progress = Math.min(1, Math.max(0, (elapsed * REVEAL_SPEED) / duration));
-        setRevealProgress(progress);
+      // Update status based on time (AFTER speech)
+      let newStatusIndex = 0;
+      for (const trigger of STATUS_TRIGGERS) {
+        if (currentTime >= trigger.time) {
+          newStatusIndex = trigger.statusIndex;
+        }
       }
+      setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
+      
+      // Update timeline steps
+      const newSteps = createInitialSteps();
+      for (const trigger of STEP_TRIGGERS) {
+        const stepIndex = newSteps.findIndex(s => s.id === trigger.stepId);
+        if (stepIndex !== -1) {
+          if (currentTime >= trigger.completeAt) {
+            newSteps[stepIndex] = { ...newSteps[stepIndex], status: "completed" };
+          } else if (currentTime >= trigger.activateAt) {
+            newSteps[stepIndex] = { ...newSteps[stepIndex], status: "active" };
+          }
+        }
+      }
+      setSteps(newSteps);
+      
+      // Track step index for progress
+      let stepIdx = -1;
+      for (let i = STEP_TRIGGERS.length - 1; i >= 0; i--) {
+        if (currentTime >= STEP_TRIGGERS[i].activateAt) {
+          stepIdx = i;
+          break;
+        }
+      }
+      setCurrentStepIndex(stepIdx);
       
       // Check for completion
       if (currentTime >= 130) {
@@ -278,34 +411,48 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [hasStarted, isPlaying, isComplete, playMode, applyStepState]);
+  }, [hasStarted, isPlaying, isComplete, playMode]);
 
   const goToNext = useCallback(() => {
-    const nextIdx = sequenceIndexRef.current + 1;
-    if (nextIdx >= SEQUENCE.length) {
-      setIsComplete(true);
-      setShowConfirmation(true);
-      setIsProcessing(false);
-      setIsPlaying(false);
-      if (audioRef.current) audioRef.current.pause();
-      return;
+    // Find next message start time
+    if (!audioRef.current) return;
+    const currentTime = audioRef.current.currentTime;
+    
+    for (const msg of TIMED_TRANSCRIPT) {
+      const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
+      if (firstPhraseTime > currentTime + 0.5) {
+        audioRef.current.currentTime = firstPhraseTime;
+        return;
+      }
     }
-    applyStepState(nextIdx);
-    if (audioRef.current) {
-      audioRef.current.currentTime = SEQUENCE[nextIdx].audioTime;
-    }
-  }, [applyStepState]);
+    
+    // No more messages, go to end
+    setIsComplete(true);
+    setShowConfirmation(true);
+    setIsProcessing(false);
+    setIsPlaying(false);
+    audioRef.current.pause();
+  }, []);
 
   const goToPrevious = useCallback(() => {
-    if (sequenceIndexRef.current <= 0) return;
-    const prevIdx = sequenceIndexRef.current - 1;
+    if (!audioRef.current) return;
+    const currentTime = audioRef.current.currentTime;
+    
+    // Find previous message start
+    let prevTime = 0;
+    for (const msg of TIMED_TRANSCRIPT) {
+      const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
+      if (firstPhraseTime < currentTime - 1) {
+        prevTime = firstPhraseTime;
+      } else {
+        break;
+      }
+    }
+    
+    audioRef.current.currentTime = prevTime;
     setIsComplete(false);
     setShowConfirmation(false);
-    applyStepState(prevIdx);
-    if (audioRef.current) {
-      audioRef.current.currentTime = SEQUENCE[prevIdx].audioTime;
-    }
-  }, [applyStepState]);
+  }, []);
 
   const togglePlayPause = useCallback(() => {
     if (isComplete) {
@@ -336,17 +483,20 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     }
     setMessages([]);
     setSteps(createInitialSteps());
-    setCurrentStatus(STATUS_MESSAGES[0]);
+    setCurrentStatus("");
     setIsProcessing(false);
     setShowConfirmation(false);
     setIsComplete(false);
     setCurrentStepIndex(-1);
-    sequenceIndexRef.current = -1;
     setHasStarted(false);
     setIsPlaying(false);
-    setRevealProgress(0);
-    setCurrentMessageStartTime(0);
-    setCurrentMessageDuration(0);
+    setCurrentPhrase({
+      messageId: null,
+      role: null,
+      visiblePhrases: [],
+      latestPhraseIndex: -1
+    });
+    lastMessageIdRef.current = null;
   }, []);
 
   const switchMode = useCallback((mode: PlayMode) => {
@@ -377,8 +527,8 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     isPlaying,
     playMode,
     currentStepIndex,
-    totalSteps: SEQUENCE.length,
-    revealProgress,
+    totalSteps: STEP_TRIGGERS.length,
+    currentPhrase,
     reset,
     goToNext,
     goToPrevious,
