@@ -1,10 +1,10 @@
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./ChatMessage";
 import AudioVisualizer from "./AudioVisualizer";
-import { CurrentCueState } from "@/hooks/useDemoSequence";
+import { CurrentCueState, PhraseChunk } from "@/hooks/useDemoSequence";
 
 interface ConversationPanelProps {
   messages: Message[];
@@ -14,10 +14,33 @@ interface ConversationPanelProps {
   currentCue?: CurrentCueState;
 }
 
-// Estimate lines based on character count
-const estimateLines = (text: string, charsPerLine: number = 50): number => {
+// Estimate lines based on character count (conservative for larger text)
+const estimateLines = (text: string, charsPerLine: number = 42): number => {
   if (!text) return 0;
   return Math.ceil(text.length / charsPerLine);
+};
+
+// Get visible chunks that fit within 4 lines (subtitle swap logic)
+const getDisplayChunks = (chunks: PhraseChunk[], maxLines: number = 4): PhraseChunk[] => {
+  if (chunks.length === 0) return [];
+  
+  // Build text from end, keeping only what fits in maxLines
+  let totalLines = 0;
+  let startIndex = chunks.length - 1;
+  
+  // Work backwards to find what fits
+  for (let i = chunks.length - 1; i >= 0; i--) {
+    const chunkText = chunks.slice(i).map(c => c.text).join(" ");
+    const lines = estimateLines(chunkText);
+    
+    if (lines <= maxLines) {
+      startIndex = i;
+    } else {
+      break;
+    }
+  }
+  
+  return chunks.slice(startIndex);
 };
 
 const ConversationPanel = ({ 
@@ -29,73 +52,20 @@ const ConversationPanel = ({
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Track display blocks for 4-line rule
-  // Each block is a "paragraph" that can hold up to 4 lines
-  const [displayBlock, setDisplayBlock] = useState<{
-    key: number;
-    speaker: "driver" | "amelia" | null;
-    text: string;
-    startCueId: string | null;
-  }>({ key: 0, speaker: null, text: "", startCueId: null });
-
-  const prevCueIdRef = useRef<string | null>(null);
-
   // Determine what to show based on currentCue
   const hasContent = currentCue && currentCue.cue && currentCue.lifecycle !== "hidden";
-
-  // 4-line rule: Reset block when speaker changes OR text would exceed 4 lines
-  useEffect(() => {
-    if (!currentCue?.cue) {
-      // No cue = silence, clear after a moment of no activity
-      if (displayBlock.text && currentCue?.lifecycle === "hidden") {
-        setDisplayBlock(prev => ({ ...prev, text: "", speaker: null, startCueId: null }));
-      }
-      return;
-    }
-
-    const cue = currentCue.cue;
-    const cueId = cue.id;
-    
-    // Same cue - just update text if it changed (shouldn't in our deterministic model)
-    if (prevCueIdRef.current === cueId) {
-      return;
-    }
-
-    // New cue detected
-    prevCueIdRef.current = cueId;
-
-    // Check if we need to reset block:
-    // 1. Speaker changed
-    // 2. Adding this text would exceed 4 lines
-    const speakerChanged = displayBlock.speaker !== null && displayBlock.speaker !== cue.speaker;
-    const potentialText = displayBlock.text ? `${displayBlock.text} ${cue.text}` : cue.text;
-    const wouldExceedLines = estimateLines(potentialText) > 4;
-
-    if (speakerChanged || wouldExceedLines) {
-      // Start new block with this cue's text
-      setDisplayBlock({
-        key: displayBlock.key + 1,
-        speaker: cue.speaker,
-        text: cue.text,
-        startCueId: cueId
-      });
-    } else {
-      // Append to current block (same speaker, within line limit)
-      setDisplayBlock(prev => ({
-        ...prev,
-        speaker: cue.speaker,
-        text: prev.text ? `${prev.text} ${cue.text}` : cue.text
-      }));
-    }
-  }, [currentCue?.cue?.id, currentCue?.lifecycle]);
+  const visibleChunks = currentCue?.visibleChunks ?? [];
+  
+  // Apply subtitle swap: show only chunks that fit within 4 lines
+  const displayChunks = useMemo(() => {
+    return getDisplayChunks(visibleChunks, 4);
+  }, [visibleChunks]);
 
   const isAmelia = currentCue?.cue?.speaker === "amelia";
-  const isCompleted = currentCue?.lifecycle === "completed";
+  const isActive = currentCue?.lifecycle === "active";
 
-  // Split text into words for display
-  const words = useMemo(() => {
-    return displayBlock.text.split(" ").filter(w => w.length > 0);
-  }, [displayBlock.text]);
+  // Create stable key for the utterance
+  const utteranceKey = currentCue?.cue?.id ?? "none";
 
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
@@ -134,7 +104,7 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Word display with 4-line max */}
+      {/* Messages - Progressive chunk reveal with subtitle swap */}
       <div
         ref={scrollRef}
         className={cn(
@@ -142,16 +112,15 @@ const ConversationPanel = ({
           isFullscreen ? "px-8 py-6" : "px-6 py-4"
         )}
       >
-        {/* Silence/noise = clean screen */}
         <AnimatePresence mode="wait">
-          {!hasContent || words.length === 0 ? null : (
+          {!hasContent || displayChunks.length === 0 ? null : (
             <motion.div 
-              key={displayBlock.key}
+              key={utteranceKey}
               className="w-full max-w-lg"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4, transition: { duration: 0.3, ease: "easeOut" } }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -4, transition: { duration: 0.25, ease: "easeOut" } }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               {/* Speaker Label */}
               <motion.div
@@ -174,7 +143,7 @@ const ConversationPanel = ({
                     "w-1.5 h-1.5 rounded-full",
                     isAmelia ? "bg-enera-brand/70" : "bg-muted-foreground/35"
                   )} />
-                  {!isCompleted && (
+                  {isActive && (
                     <span className={cn(
                       "w-1.5 h-1.5 rounded-full animate-pulse",
                       isAmelia ? "bg-enera-brand/35" : "bg-muted-foreground/20"
@@ -183,27 +152,30 @@ const ConversationPanel = ({
                 </span>
               </motion.div>
 
-              {/* Text display - stable, forward-only */}
+              {/* Phrase chunks - progressive reveal */}
               <p className={cn(
                 "leading-relaxed font-medium",
                 isFullscreen ? "text-2xl" : "text-xl",
                 isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
               )}>
-                {words.map((word, idx) => (
-                  <motion.span
-                    key={`${displayBlock.key}-word-${idx}`}
-                    className="inline-block mr-[0.25em]"
-                    initial={{ opacity: 0, y: 3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ 
-                      duration: 0.15, 
-                      ease: "easeOut",
-                      delay: idx * 0.02 // Subtle stagger for new words
-                    }}
-                  >
-                    {word}
-                  </motion.span>
-                ))}
+                <AnimatePresence mode="popLayout">
+                  {displayChunks.map((chunk, idx) => (
+                    <motion.span
+                      key={`${utteranceKey}-chunk-${chunk.t}`}
+                      className="inline"
+                      initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                      transition={{ 
+                        duration: 0.2, 
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                    >
+                      {chunk.text}
+                      {idx < displayChunks.length - 1 ? " " : ""}
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
               </p>
             </motion.div>
           )}

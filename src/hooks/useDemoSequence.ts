@@ -4,18 +4,23 @@ import { TimelineStep } from "@/components/demo/TimelineItem";
 
 // ============================================================
 // DETERMINISTIC CUE SHEET - Audio timestamps are the ONLY truth
+// Phrase chunks for natural progressive reveal
 // ============================================================
+
+export interface PhraseChunk {
+  t: number;      // Timestamp when this chunk appears
+  text: string;   // 2-7 words
+}
 
 export interface Cue {
   id: string;
   speaker: "driver" | "amelia";
-  startTime: number;  // When speech begins (seconds)
-  endTime: number;    // When speech ends (seconds)
-  text: string;
+  startTime: number;
+  endTime: number;
+  chunks: PhraseChunk[];
 }
 
 // Master global offset - adjustable via D-toggle calibration
-// Positive = text appears later, Negative = text appears earlier
 let GLOBAL_OFFSET = 0;
 
 export const getGlobalOffset = () => GLOBAL_OFFSET;
@@ -23,22 +28,177 @@ export const setGlobalOffset = (offset: number) => {
   GLOBAL_OFFSET = offset;
 };
 
-// CUE SHEET: Exact timestamps for each utterance
-// These are the ONLY source of truth for text display
+// CUE SHEET with phrase chunks (2-7 words each)
+// Each chunk has its own timestamp for progressive reveal
 const CUE_SHEET: Cue[] = [
-  { id: "1", speaker: "amelia", startTime: 6.3, endTime: 12.0, text: "Hello, my name is Amelia, and I'm with Enera Support. How can I help you today?" },
-  { id: "2", speaker: "driver", startTime: 13.0, endTime: 27.0, text: "Hi, I'm trying to use the charger at the Church Street car park in Market Harborough, but I'm not having much luck. I've tried tapping my contactless card a few times now, and it looks like the screen isn't changing at all." },
-  { id: "3", speaker: "amelia", startTime: 27.5, endTime: 36.5, text: "I'm sorry you're having trouble. Let me look into that for you. You're in Market Harborough. Can you just confirm the charger ID is MH-102-B?" },
-  { id: "4", speaker: "driver", startTime: 37.0, endTime: 40.5, text: "Yeah, that's the one. MH-102-B." },
-  { id: "5", speaker: "amelia", startTime: 41.5, endTime: 61.0, text: "Perfect, thanks. Let me just look into what's happening there. I've just run a diagnostic, and it looks like the card reader module is frozen, although the charger itself is healthy. I'm going to trigger a remote reset on the reader for you now. It should take about 45 seconds to reboot and come back online." },
-  { id: "6", speaker: "driver", startTime: 61.5, endTime: 64.5, text: "Great, okay, I'll hang on." },
-  { id: "7", speaker: "amelia", startTime: 65.5, endTime: 81.0, text: "While we're waiting for that to cycle, I noticed you're using a guest payment. Did you know that if you used our app, you'd actually get a 35% discount for charging during this off-peak window? It's a fair bit cheaper than the standard contactless rate." },
-  { id: "8", speaker: "driver", startTime: 81.5, endTime: 89.0, text: "Oh, interesting. I wasn't aware of that. I will give the app a go next time. Thanks." },
-  { id: "9", speaker: "amelia", startTime: 89.5, endTime: 101.5, text: "It's definitely worth it for the savings. Okay, the card reader has finished rebooting and is showing as available again. Could you give your card another tap for me? It should authorize straight away now." },
-  { id: "10", speaker: "driver", startTime: 102.0, endTime: 113.0, text: "Yeah, let me try that. Okay, oh yeah, it's worked. It says preparing, and it sounds like the cable's locked, so I think we're good. Thank you." },
-  { id: "11", speaker: "amelia", startTime: 113.5, endTime: 122.0, text: "You're very welcome. I can see the session has successfully initialized on my end, too. Is there anything else I can help you with today?" },
-  { id: "12", speaker: "driver", startTime: 122.5, endTime: 126.0, text: "No, that's it. Thanks for everything." },
-  { id: "13", speaker: "amelia", startTime: 127.5, endTime: 134.0, text: "No problem at all. Have a lovely day, and enjoy the rest of your drive." },
+  { 
+    id: "1", 
+    speaker: "amelia", 
+    startTime: 6.3, 
+    endTime: 12.0, 
+    chunks: [
+      { t: 6.3, text: "Hello, my name is Amelia," },
+      { t: 7.8, text: "and I'm with Enera Support." },
+      { t: 9.5, text: "How can I help you today?" }
+    ]
+  },
+  { 
+    id: "2", 
+    speaker: "driver", 
+    startTime: 13.0, 
+    endTime: 27.0, 
+    chunks: [
+      { t: 13.0, text: "Hi, I'm trying to use" },
+      { t: 14.2, text: "the charger at the Church Street car park" },
+      { t: 16.0, text: "in Market Harborough," },
+      { t: 17.2, text: "but I'm not having much luck." },
+      { t: 19.0, text: "I've tried tapping my contactless card" },
+      { t: 21.0, text: "a few times now," },
+      { t: 22.2, text: "and it looks like the screen" },
+      { t: 24.0, text: "isn't changing at all." }
+    ]
+  },
+  { 
+    id: "3", 
+    speaker: "amelia", 
+    startTime: 27.5, 
+    endTime: 36.5, 
+    chunks: [
+      { t: 27.5, text: "I'm sorry you're having trouble." },
+      { t: 29.2, text: "Let me look into that for you." },
+      { t: 31.0, text: "You're in Market Harborough." },
+      { t: 32.8, text: "Can you just confirm" },
+      { t: 34.0, text: "the charger ID is MH-102-B?" }
+    ]
+  },
+  { 
+    id: "4", 
+    speaker: "driver", 
+    startTime: 37.0, 
+    endTime: 40.5, 
+    chunks: [
+      { t: 37.0, text: "Yeah, that's the one." },
+      { t: 38.5, text: "MH-102-B." }
+    ]
+  },
+  { 
+    id: "5", 
+    speaker: "amelia", 
+    startTime: 41.5, 
+    endTime: 61.0, 
+    chunks: [
+      { t: 41.5, text: "Perfect, thanks." },
+      { t: 42.8, text: "Let me just look into" },
+      { t: 44.0, text: "what's happening there." },
+      { t: 46.0, text: "I've just run a diagnostic," },
+      { t: 48.0, text: "and it looks like the card reader module" },
+      { t: 50.2, text: "is frozen," },
+      { t: 51.0, text: "although the charger itself is healthy." },
+      { t: 53.5, text: "I'm going to trigger" },
+      { t: 54.8, text: "a remote reset on the reader for you now." },
+      { t: 57.0, text: "It should take about 45 seconds" },
+      { t: 59.0, text: "to reboot and come back online." }
+    ]
+  },
+  { 
+    id: "6", 
+    speaker: "driver", 
+    startTime: 61.5, 
+    endTime: 64.5, 
+    chunks: [
+      { t: 61.5, text: "Great, okay," },
+      { t: 62.8, text: "I'll hang on." }
+    ]
+  },
+  { 
+    id: "7", 
+    speaker: "amelia", 
+    startTime: 65.5, 
+    endTime: 81.0, 
+    chunks: [
+      { t: 65.5, text: "While we're waiting for that to cycle," },
+      { t: 67.5, text: "I noticed you're using a guest payment." },
+      { t: 70.0, text: "Did you know that if you used our app," },
+      { t: 72.5, text: "you'd actually get a 35% discount" },
+      { t: 74.8, text: "for charging during this off-peak window?" },
+      { t: 77.5, text: "It's a fair bit cheaper" },
+      { t: 79.0, text: "than the standard contactless rate." }
+    ]
+  },
+  { 
+    id: "8", 
+    speaker: "driver", 
+    startTime: 81.5, 
+    endTime: 89.0, 
+    chunks: [
+      { t: 81.5, text: "Oh, interesting." },
+      { t: 82.8, text: "I wasn't aware of that." },
+      { t: 84.5, text: "I will give the app a go next time." },
+      { t: 87.0, text: "Thanks." }
+    ]
+  },
+  { 
+    id: "9", 
+    speaker: "amelia", 
+    startTime: 89.5, 
+    endTime: 101.5, 
+    chunks: [
+      { t: 89.5, text: "It's definitely worth it for the savings." },
+      { t: 92.0, text: "Okay, the card reader has finished rebooting" },
+      { t: 94.5, text: "and is showing as available again." },
+      { t: 96.5, text: "Could you give your card" },
+      { t: 98.0, text: "another tap for me?" },
+      { t: 99.5, text: "It should authorize straight away now." }
+    ]
+  },
+  { 
+    id: "10", 
+    speaker: "driver", 
+    startTime: 102.0, 
+    endTime: 113.0, 
+    chunks: [
+      { t: 102.0, text: "Yeah, let me try that." },
+      { t: 104.0, text: "Okay, oh yeah, it's worked." },
+      { t: 106.0, text: "It says preparing," },
+      { t: 107.5, text: "and it sounds like the cable's locked," },
+      { t: 109.5, text: "so I think we're good." },
+      { t: 111.0, text: "Thank you." }
+    ]
+  },
+  { 
+    id: "11", 
+    speaker: "amelia", 
+    startTime: 113.5, 
+    endTime: 122.0, 
+    chunks: [
+      { t: 113.5, text: "You're very welcome." },
+      { t: 115.0, text: "I can see the session" },
+      { t: 116.5, text: "has successfully initialized on my end, too." },
+      { t: 119.0, text: "Is there anything else" },
+      { t: 120.5, text: "I can help you with today?" }
+    ]
+  },
+  { 
+    id: "12", 
+    speaker: "driver", 
+    startTime: 122.5, 
+    endTime: 126.0, 
+    chunks: [
+      { t: 122.5, text: "No, that's it." },
+      { t: 124.0, text: "Thanks for everything." }
+    ]
+  },
+  { 
+    id: "13", 
+    speaker: "amelia", 
+    startTime: 127.5, 
+    endTime: 134.0, 
+    chunks: [
+      { t: 127.5, text: "No problem at all." },
+      { t: 129.0, text: "Have a lovely day," },
+      { t: 130.5, text: "and enjoy the rest of your drive." }
+    ]
+  },
 ];
 
 // SYSTEM STATE CUES - tied to audio moments
@@ -87,7 +247,7 @@ const createInitialSteps = (): TimelineStep[] => [
 ];
 
 // ============================================================
-// CUE STATE - Strict lifecycle: Hidden → Active → Completed
+// CUE STATE - Strict lifecycle with chunk tracking
 // ============================================================
 
 export type CueLifecycle = "hidden" | "active" | "completed";
@@ -95,8 +255,11 @@ export type CueLifecycle = "hidden" | "active" | "completed";
 export interface CurrentCueState {
   cue: Cue | null;
   lifecycle: CueLifecycle;
-  // For debug overlay
   cueIndex: number;
+  // Chunk tracking for progressive reveal
+  activeChunkIndex: number;        // Which chunk we're on (0-based)
+  visibleChunks: PhraseChunk[];    // All chunks visible so far
+  nextChunkTime: number | null;    // When the next chunk will appear
   nextCueTime: number | null;
 }
 
@@ -115,22 +278,24 @@ export const useDemoSequence = () => {
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Current cue state - deterministic, no heuristics
+  // Current cue state with chunk tracking
   const [currentCue, setCurrentCue] = useState<CurrentCueState>({
     cue: null,
     lifecycle: "hidden",
     cueIndex: -1,
+    activeChunkIndex: -1,
+    visibleChunks: [],
+    nextChunkTime: null,
     nextCueTime: CUE_SHEET[0]?.startTime ?? null
   });
 
-  // For exposing to debug overlay
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
   
-  // Track last completed cue to maintain persistence
-  const lastCompletedCueRef = useRef<Cue | null>(null);
+  // Track last completed cue for persistence
+  const lastCompletedCueRef = useRef<{cue: Cue; chunks: PhraseChunk[]} | null>(null);
 
   // Initialize audio
   useEffect(() => {
@@ -160,7 +325,7 @@ export const useDemoSequence = () => {
   }, []);
 
   // ============================================================
-  // DETERMINISTIC SYNC LOOP - Audio currentTime drives EVERYTHING
+  // DETERMINISTIC SYNC LOOP - Chunk-level progressive reveal
   // ============================================================
   useEffect(() => {
     if (!hasStarted || !isPlaying || isComplete) return;
@@ -168,12 +333,11 @@ export const useDemoSequence = () => {
     const syncWithAudio = () => {
       if (!audioRef.current) return;
 
-      // Get current time with offset applied
       const rawTime = audioRef.current.currentTime;
       const currentTime = rawTime + GLOBAL_OFFSET;
       setAudioCurrentTime(rawTime);
 
-      // Find active cue based on timestamps
+      // Find active cue
       let activeCueIndex = -1;
       let activeCue: Cue | null = null;
 
@@ -186,7 +350,6 @@ export const useDemoSequence = () => {
         }
       }
 
-      // Determine next cue time for debug overlay
       const nextCueTime = activeCueIndex >= 0 
         ? CUE_SHEET[activeCueIndex + 1]?.startTime ?? null
         : CUE_SHEET.find(c => c.startTime > currentTime)?.startTime ?? null;
@@ -197,6 +360,9 @@ export const useDemoSequence = () => {
           cue: null,
           lifecycle: "hidden",
           cueIndex: -1,
+          activeChunkIndex: -1,
+          visibleChunks: [],
+          nextChunkTime: CUE_SHEET[0].chunks[0]?.t ?? null,
           nextCueTime: CUE_SHEET[0].startTime
         });
         setCurrentStatus("");
@@ -206,31 +372,54 @@ export const useDemoSequence = () => {
         return;
       }
 
-      // ACTIVE CUE: Show current text
+      // ACTIVE CUE: Progressive chunk reveal
       if (activeCue) {
-        lastCompletedCueRef.current = activeCue;
+        // Find which chunks are visible based on timestamps
+        const visibleChunks: PhraseChunk[] = [];
+        let activeChunkIndex = -1;
+
+        for (let i = 0; i < activeCue.chunks.length; i++) {
+          if (currentTime >= activeCue.chunks[i].t) {
+            visibleChunks.push(activeCue.chunks[i]);
+            activeChunkIndex = i;
+          }
+        }
+
+        // Find next chunk time
+        const nextChunkTime = activeChunkIndex < activeCue.chunks.length - 1
+          ? activeCue.chunks[activeChunkIndex + 1]?.t ?? null
+          : null;
+
+        lastCompletedCueRef.current = { cue: activeCue, chunks: visibleChunks };
+
         setCurrentCue({
           cue: activeCue,
           lifecycle: "active",
           cueIndex: activeCueIndex,
+          activeChunkIndex,
+          visibleChunks,
+          nextChunkTime,
           nextCueTime
         });
         setIsProcessing(true);
       } else {
-        // BETWEEN CUES: Show last completed cue as completed (frozen)
+        // BETWEEN CUES: Show last completed cue frozen
         if (lastCompletedCueRef.current) {
-          const lastIdx = CUE_SHEET.findIndex(c => c.id === lastCompletedCueRef.current!.id);
+          const lastIdx = CUE_SHEET.findIndex(c => c.id === lastCompletedCueRef.current!.cue.id);
           setCurrentCue({
-            cue: lastCompletedCueRef.current,
+            cue: lastCompletedCueRef.current.cue,
             lifecycle: "completed",
             cueIndex: lastIdx,
+            activeChunkIndex: lastCompletedCueRef.current.chunks.length - 1,
+            visibleChunks: lastCompletedCueRef.current.chunks,
+            nextChunkTime: null,
             nextCueTime
           });
         }
         setIsProcessing(false);
       }
 
-      // UPDATE SYSTEM STATUS - timestamp driven
+      // UPDATE SYSTEM STATUS
       let newStatus = "";
       for (const trigger of SYSTEM_CUES) {
         if (currentTime >= trigger.time) {
@@ -253,7 +442,7 @@ export const useDemoSequence = () => {
       }
       setSteps(newSteps);
 
-      // Track step index for progress
+      // Track step index
       let stepIdx = -1;
       for (let i = STEP_TRIGGERS.length - 1; i >= 0; i--) {
         if (currentTime >= STEP_TRIGGERS[i].activateAt) {
@@ -263,14 +452,14 @@ export const useDemoSequence = () => {
       }
       setCurrentStepIndex(stepIdx);
 
-      // Build completed messages for reference
+      // Build completed messages
       const completedMsgs: Message[] = [];
       for (const cue of CUE_SHEET) {
         if (currentTime >= cue.endTime) {
           completedMsgs.push({
             id: cue.id,
             role: cue.speaker,
-            content: cue.text
+            content: cue.chunks.map(c => c.text).join(" ")
           });
         }
       }
@@ -364,6 +553,9 @@ export const useDemoSequence = () => {
       cue: null,
       lifecycle: "hidden",
       cueIndex: -1,
+      activeChunkIndex: -1,
+      visibleChunks: [],
+      nextChunkTime: null,
       nextCueTime: CUE_SHEET[0]?.startTime ?? null
     });
     lastCompletedCueRef.current = null;
@@ -399,5 +591,4 @@ export const useDemoSequence = () => {
   };
 };
 
-// Export CUE_SHEET for debug overlay
 export { CUE_SHEET };

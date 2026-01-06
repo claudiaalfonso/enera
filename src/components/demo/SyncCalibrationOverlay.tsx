@@ -33,7 +33,6 @@ const SyncCalibrationOverlay = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Offset adjustment handlers
   const adjustOffset = useCallback((delta: number) => {
     const newOffset = Math.round((offset + delta) * 100) / 100;
     setOffset(newOffset);
@@ -45,7 +44,6 @@ const SyncCalibrationOverlay = ({
     setGlobalOffset(0);
   }, []);
 
-  // Seek to specific time
   const seekTo = useCallback((time: number) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time - getGlobalOffset();
@@ -55,6 +53,7 @@ const SyncCalibrationOverlay = ({
   if (!import.meta.env.DEV) return null;
 
   const effectiveTime = audioCurrentTime + offset;
+  const totalChunks = currentCue.cue?.chunks?.length ?? 0;
 
   return (
     <AnimatePresence>
@@ -103,10 +102,10 @@ const SyncCalibrationOverlay = ({
             </div>
           </div>
 
-          {/* Current Cue Info */}
+          {/* Chunk Info */}
           <div className="mb-3 p-2 bg-muted/30 rounded">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-muted-foreground text-[10px]">CUE STATE</span>
+              <span className="text-muted-foreground text-[10px]">CUE + CHUNK STATE</span>
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                 currentCue.lifecycle === 'active' ? 'bg-green-500/20 text-green-400' :
                 currentCue.lifecycle === 'completed' ? 'bg-blue-500/20 text-blue-400' :
@@ -119,8 +118,14 @@ const SyncCalibrationOverlay = ({
             {currentCue.cue ? (
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Index:</span>
+                  <span className="text-muted-foreground">Cue:</span>
                   <span className="text-foreground">{currentCue.cueIndex + 1} / {CUE_SHEET.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Chunk:</span>
+                  <span className="text-primary font-bold">
+                    {currentCue.activeChunkIndex + 1} / {totalChunks}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Speaker:</span>
@@ -129,17 +134,29 @@ const SyncCalibrationOverlay = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Start:</span>
-                  <span className="text-foreground">{currentCue.cue.startTime.toFixed(1)}s</span>
+                  <span className="text-muted-foreground">Cue window:</span>
+                  <span className="text-foreground">{currentCue.cue.startTime.toFixed(1)}s → {currentCue.cue.endTime.toFixed(1)}s</span>
                 </div>
+                
+                {/* Next chunk time */}
+                {currentCue.nextChunkTime !== null && (
+                  <div className="flex justify-between pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">Next chunk:</span>
+                    <span className="text-yellow-400 font-bold">{currentCue.nextChunkTime.toFixed(2)}s</span>
+                  </div>
+                )}
+
+                {/* Visible chunks count */}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">End:</span>
-                  <span className="text-foreground">{currentCue.cue.endTime.toFixed(1)}s</span>
+                  <span className="text-muted-foreground">Visible chunks:</span>
+                  <span className="text-foreground">{currentCue.visibleChunks.length}</span>
                 </div>
+
+                {/* Current chunk text */}
                 <div className="pt-1 border-t border-border/50">
-                  <span className="text-muted-foreground text-[10px]">TEXT:</span>
+                  <span className="text-muted-foreground text-[10px]">CURRENT CHUNK:</span>
                   <p className="text-foreground text-[10px] leading-relaxed mt-0.5">
-                    "{currentCue.cue.text.slice(0, 80)}{currentCue.cue.text.length > 80 ? '...' : ''}"
+                    "{currentCue.visibleChunks[currentCue.visibleChunks.length - 1]?.text ?? '-'}"
                   </p>
                 </div>
               </div>
