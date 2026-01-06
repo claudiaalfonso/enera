@@ -10,94 +10,95 @@ interface WelcomeOverlayProps {
 const WelcomeOverlay = ({ onStart }: WelcomeOverlayProps) => {
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background page-gradient"
-      initial={{ opacity: 1 }}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      {/* Subtle radial glow */}
+      {/* Subtle background gradient - barely perceptible */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-enera-brand/5 blur-3xl" />
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(ellipse 100% 80% at 50% 20%, hsl(168 30% 96% / 0.6) 0%, transparent 50%),
+              radial-gradient(ellipse 80% 60% at 80% 80%, hsl(168 25% 95% / 0.4) 0%, transparent 40%),
+              radial-gradient(ellipse 60% 50% at 20% 90%, hsl(200 20% 96% / 0.3) 0%, transparent 40%)
+            `
+          }}
+        />
       </div>
 
-      {/* Content */}
+      {/* Content container with perfect vertical rhythm */}
       <motion.div
-        className="relative z-10 text-center px-6"
-        initial={{ opacity: 0, y: 20 }}
+        className="relative z-10 flex flex-col items-center px-6 max-w-lg"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+        transition={{ delay: 0.15, duration: 0.5, ease: "easeOut" }}
       >
-        {/* Logo */}
+        {/* Logo - anchoring presence */}
         <motion.div
-          className="flex justify-center mb-8"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
         >
           <img 
             src={eneraLogo} 
             alt="Enera" 
-            className="h-14 object-contain"
+            className="h-12 object-contain"
           />
         </motion.div>
 
-        {/* Title */}
+        {/* Headline - confident but approachable */}
         <motion.h1
-          className="text-2xl md:text-3xl font-semibold text-foreground mb-3 tracking-tight"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+          className="text-[1.75rem] md:text-[2rem] font-medium text-foreground mb-4 tracking-[-0.02em] text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
         >
           Amelia Voice AI Demo
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Subheading - calm promise */}
         <motion.p
-          className="text-base md:text-lg text-muted-foreground mb-10 max-w-md mx-auto leading-relaxed"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
+          className="text-base text-muted-foreground mb-12 text-center leading-relaxed max-w-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.5 }}
         >
           Watch Amelia resolve a real EV charging issue in real time
         </motion.p>
 
-        {/* Start Button */}
+        {/* Primary CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55, duration: 0.5 }}
         >
           <Button
             size="lg"
             onClick={onStart}
-            className="h-12 px-8 rounded-full bg-enera-brand hover:bg-enera-brand/90 text-white font-medium shadow-lg shadow-enera-brand/20 transition-all hover:shadow-xl hover:shadow-enera-brand/25 hover:scale-[1.02]"
+            className="h-12 px-7 rounded-full bg-enera-brand hover:bg-enera-brand/90 text-white font-medium transition-all duration-200 hover:shadow-lg hover:shadow-enera-brand/15 active:scale-[0.98]"
           >
-            <Play className="w-5 h-5 mr-2" />
+            <Play className="w-4 h-4 mr-2.5 fill-current" />
             Start Demo
           </Button>
         </motion.div>
 
-        {/* Keyboard hint */}
+        {/* Keyboard hint - refined and intentional */}
         <motion.p
-          className="text-xs text-muted-foreground/60 mt-6"
+          className="text-[13px] text-muted-foreground/50 mt-8 tracking-wide"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
         >
-          Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono text-[10px]">Space</kbd> to start
+          or press{" "}
+          <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground/70 font-mono text-[11px] tracking-normal">
+            Space
+          </kbd>
         </motion.p>
-      </motion.div>
-
-      {/* Bottom tagline */}
-      <motion.div
-        className="absolute bottom-8 left-0 right-0 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
-      >
-        <p className="text-xs text-muted-foreground/50">
-          Intelligent Driver Support for CPOs
-        </p>
       </motion.div>
     </motion.div>
   );
