@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,19 @@ const ConversationPanel = ({
   isPlaying = false
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [prevSpeaker, setPrevSpeaker] = useState<string | null>(null);
 
-  // Show only the current message (voice-first)
   const currentMessage = messages[messages.length - 1];
+  const currentSpeaker = currentMessage?.role;
+  
+  // Track speaker changes for transition effects
+  const isSpeakerChange = prevSpeaker !== null && prevSpeaker !== currentSpeaker;
+  
+  useEffect(() => {
+    if (currentSpeaker) {
+      setPrevSpeaker(currentSpeaker);
+    }
+  }, [currentSpeaker]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -31,6 +41,25 @@ const ConversationPanel = ({
       });
     }
   }, [messages]);
+
+  // Animation variants for smooth speaker transitions
+  const messageVariants = {
+    initial: (isAmelia: boolean) => ({
+      opacity: 0,
+      x: isAmelia ? 20 : -20,
+      scale: 0.97,
+    }),
+    animate: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+    },
+    exit: (isAmelia: boolean) => ({
+      opacity: 0,
+      x: isAmelia ? -10 : 10,
+      scale: 0.98,
+    }),
+  };
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -101,45 +130,74 @@ const ConversationPanel = ({
           </motion.div>
         ) : (
           <div className="w-full max-w-sm">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {currentMessage && (
                 <motion.div
                   key={currentMessage.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                  custom={currentMessage.role === "amelia"}
+                  variants={messageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ 
+                    duration: isSpeakerChange ? 0.4 : 0.25,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
                 >
-                  {/* Speaker Label - Compact */}
-                  <div className={cn(
-                    "flex items-center gap-1.5 mb-1.5",
-                    currentMessage.role === "amelia" ? "justify-end" : "justify-start"
-                  )}>
+                  {/* Speaker Label with fade */}
+                  <motion.div 
+                    className={cn(
+                      "flex items-center gap-1.5 mb-1.5",
+                      currentMessage.role === "amelia" ? "justify-end" : "justify-start"
+                    )}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1, duration: 0.2 }}
+                  >
                     <span className={cn(
-                      "text-[9px] uppercase tracking-widest font-semibold",
+                      "text-[9px] uppercase tracking-widest font-semibold transition-colors duration-300",
                       currentMessage.role === "amelia" ? "text-enera-brand" : "text-muted-foreground/60"
                     )}>
                       {currentMessage.role === "amelia" ? "Amelia" : "Driver"}
                     </span>
-                    <span className="flex gap-0.5">
-                      <span className="w-1 h-1 rounded-full bg-enera-brand/80 animate-pulse" />
-                      <span className="w-1 h-1 rounded-full bg-enera-brand/80 animate-pulse" style={{ animationDelay: "150ms" }} />
-                    </span>
-                  </div>
+                    <motion.span 
+                      className="flex gap-0.5"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.15, duration: 0.2 }}
+                    >
+                      <span className={cn(
+                        "w-1 h-1 rounded-full animate-pulse",
+                        currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
+                      )} />
+                      <span 
+                        className={cn(
+                          "w-1 h-1 rounded-full animate-pulse",
+                          currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
+                        )} 
+                        style={{ animationDelay: "150ms" }} 
+                      />
+                    </motion.span>
+                  </motion.div>
 
-                  {/* Message Text - Larger, readable */}
-                  <p className={cn(
-                    "leading-snug font-medium",
-                    isFullscreen ? "text-xl" : "text-lg",
-                    currentMessage.role === "amelia" 
-                      ? "text-right text-foreground" 
-                      : "text-left text-foreground/90"
-                  )}>
+                  {/* Message Text with stagger */}
+                  <motion.p 
+                    className={cn(
+                      "leading-snug font-medium",
+                      isFullscreen ? "text-xl" : "text-lg",
+                      currentMessage.role === "amelia" 
+                        ? "text-right text-foreground" 
+                        : "text-left text-foreground/90"
+                    )}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08, duration: 0.25 }}
+                  >
                     {currentMessage.content.length > 100 
                       ? currentMessage.content.slice(0, 100) + "..." 
                       : currentMessage.content
                     }
-                  </p>
+                  </motion.p>
                 </motion.div>
               )}
             </AnimatePresence>
