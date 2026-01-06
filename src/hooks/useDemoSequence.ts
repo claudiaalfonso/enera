@@ -72,26 +72,24 @@ const CUE_SHEET: Cue[] = [
     endTime: 38.3, 
     chunks: [
       { t: 34.8, text: "Uh, yeah, that's the one." },
-      { t: 36.3, text: "MH-102-B." }
+      { t: 35.0, text: "MH-102-B." }
     ]
   },
   { 
     id: "5", 
     speaker: "amelia", 
-    startTime: 39.3, 
-    endTime: 58.8, 
+    startTime: 39.0, 
+    endTime: 63.0, 
     chunks: [
-      { t: 39.3, text: "Perfect, thanks." },
-      { t: 40.6, text: "Let me just look into" },
-      { t: 41.8, text: "what's happening there." },
-      { t: 43.8, text: "I've just run a diagnostic," },
-      { t: 45.8, text: "and it looks like the card reader module" },
-      { t: 48.0, text: "is frozen," },
-      { t: 48.8, text: "although the charger itself is healthy." },
-      { t: 51.3, text: "I'm going to trigger" },
-      { t: 52.6, text: "a remote reset on the reader for you now." },
-      { t: 54.8, text: "It should take about 45 seconds" },
-      { t: 56.8, text: "to reboot and come back online." }
+      { t: 39.0, text: "Perfect." },
+      { t: 43.2, text: "I've just run a diagnostic," },
+      { t: 45.0, text: "and it looks like the card reader" },
+      { t: 47.0, text: "is frozen," },
+      { t: 47.9, text: "although the charger itself is healthy." },
+      { t: 49.8, text: "I'm going to trigger a remote reset" },
+      { t: 52.9, text: "on the reader for you now." },
+      { t: 54.76, text: "It should take about 45 seconds" },
+      { t: 56.82, text: "to reboot and come back online." }
     ]
   },
   { 
@@ -107,10 +105,10 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "7", 
     speaker: "amelia", 
-    startTime: 65.5, 
+    startTime: 64.0, 
     endTime: 81.0, 
     chunks: [
-      { t: 65.5, text: "While we're waiting for that to cycle," },
+      { t: 64.0, text: "While we're waiting for that to cycle," },
       { t: 67.5, text: "I noticed you're using a guest payment." },
       { t: 70.0, text: "Did you know that if you used our app," },
       { t: 72.5, text: "you'd actually get a 35% discount" },
