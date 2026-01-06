@@ -219,13 +219,13 @@ const Index = () => {
           <DemoHeader isFullscreen={isFullscreen} />
         </motion.div>
 
-        {/* Main Content */}
-        <main className={cn("flex-1 flex min-h-0", !isCompact && "pb-14")}>
-          {/* Left Panel - System View (60%) */}
+        {/* Main Content - Tighter layout */}
+        <main className={cn("flex-1 flex min-h-0 gap-0", !isCompact && "pb-12")}>
+          {/* Left Panel - System View (50%) */}
           <motion.div
             className={cn(
-              "border-r border-border/50 bg-card/60 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
-              isFullscreen ? "w-[55%]" : "w-[60%]"
+              "border-r border-border/30 bg-card/40 backdrop-blur-sm flex-shrink-0",
+              isFullscreen ? "w-[48%]" : "w-[50%]"
             )}
             variants={leftPanelVariants}
           >
@@ -238,11 +238,11 @@ const Index = () => {
             />
           </motion.div>
 
-          {/* Right Panel - Conversation (40%) */}
+          {/* Right Panel - Conversation (50%) */}
           <motion.div
             className={cn(
-              "bg-enera-surface-elevated/80 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
-              isFullscreen ? "w-[45%]" : "w-[40%]"
+              "bg-enera-surface-elevated/60 backdrop-blur-sm flex-shrink-0",
+              isFullscreen ? "w-[52%]" : "w-[50%]"
             )}
             variants={rightPanelVariants}
           >

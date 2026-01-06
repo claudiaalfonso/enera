@@ -9,7 +9,7 @@ interface AudioVisualizerProps {
 }
 
 const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVisualizerProps) => {
-  const [levels, setLevels] = useState<number[]>(new Array(5).fill(0.15));
+  const [levels, setLevels] = useState<number[]>(new Array(7).fill(0.12));
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
@@ -24,7 +24,7 @@ const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVis
         audioContextRef.current = new AudioContext();
         analyzerRef.current = audioContextRef.current.createAnalyser();
         analyzerRef.current.fftSize = 32;
-        analyzerRef.current.smoothingTimeConstant = 0.8;
+        analyzerRef.current.smoothingTimeConstant = 0.75;
 
         sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current!);
         sourceRef.current.connect(analyzerRef.current);
@@ -35,7 +35,6 @@ const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVis
       }
     };
 
-    // Setup on first play
     const handlePlay = () => {
       if (!connectedRef.current) {
         setupAnalyzer();
@@ -54,8 +53,7 @@ const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVis
 
   useEffect(() => {
     if (!isPlaying || !analyzerRef.current) {
-      // Idle state - subtle ambient pulse
-      setLevels(new Array(5).fill(0.15));
+      setLevels(new Array(7).fill(0.12));
       return;
     }
 
@@ -66,17 +64,18 @@ const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVis
       
       analyzerRef.current.getByteFrequencyData(dataArray);
       
-      // Sample 5 frequency bands
+      // Sample 7 frequency bands for more detail
       const bands = [
         dataArray[1] / 255,
         dataArray[2] / 255,
         dataArray[3] / 255,
         dataArray[4] / 255,
         dataArray[5] / 255,
+        dataArray[6] / 255,
+        dataArray[7] / 255,
       ];
       
-      // Normalize and add minimum height
-      const normalized = bands.map(v => Math.max(0.15, Math.min(1, v * 1.2)));
+      const normalized = bands.map(v => Math.max(0.12, Math.min(1, v * 1.3)));
       setLevels(normalized);
       
       rafRef.current = requestAnimationFrame(updateLevels);
@@ -93,22 +92,22 @@ const AudioVisualizer = ({ audioRef, isPlaying, isFullscreen = false }: AudioVis
 
   return (
     <div className={cn(
-      "flex items-center justify-center gap-[3px]",
-      isFullscreen ? "h-8" : "h-6"
+      "flex items-center justify-center gap-[2px]",
+      isFullscreen ? "h-5" : "h-4"
     )}>
       {levels.map((level, i) => (
         <motion.div
           key={i}
-          className="bg-enera-brand/60 rounded-full"
+          className="bg-enera-brand/70 rounded-full"
           style={{
-            width: isFullscreen ? 3 : 2,
+            width: isFullscreen ? 2 : 1.5,
           }}
           animate={{
-            height: `${level * (isFullscreen ? 32 : 24)}px`,
-            opacity: 0.4 + level * 0.6,
+            height: `${level * (isFullscreen ? 20 : 16)}px`,
+            opacity: 0.5 + level * 0.5,
           }}
           transition={{
-            duration: 0.08,
+            duration: 0.06,
             ease: "easeOut",
           }}
         />

@@ -20,8 +20,7 @@ const ConversationPanel = ({
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get only the last 2 messages (current speaker context)
-  const visibleMessages = messages.slice(-2);
+  // Show only the current message (voice-first)
   const currentMessage = messages[messages.length - 1];
 
   useEffect(() => {
@@ -35,27 +34,27 @@ const ConversationPanel = ({
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header - Minimal with visualizer */}
+      {/* Header - Compact */}
       <div className={cn(
-        "flex-shrink-0 border-b border-border/30 bg-enera-surface-elevated/30 transition-all",
-        isFullscreen ? "px-8 py-3" : "px-6 py-2.5"
+        "flex-shrink-0 border-b border-border/20 bg-enera-surface-elevated/20 transition-all",
+        isFullscreen ? "px-6 py-2" : "px-4 py-1.5"
       )}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <div className="relative">
               <Phone className={cn(
-                "text-enera-brand transition-all",
-                isFullscreen ? "w-4 h-4" : "w-3.5 h-3.5"
+                "text-enera-brand",
+                isFullscreen ? "w-3.5 h-3.5" : "w-3 h-3"
               )} />
               {messages.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-success rounded-full animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-success rounded-full" />
               )}
             </div>
             <span className={cn(
-              "font-medium text-foreground/80 transition-all",
-              isFullscreen ? "text-sm" : "text-xs"
+              "font-medium text-foreground/70",
+              isFullscreen ? "text-xs" : "text-[11px]"
             )}>
-              Live Call
+              Live
             </span>
           </div>
 
@@ -70,10 +69,13 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Show only current context */}
+      {/* Messages - Compact, centered */}
       <div
         ref={scrollRef}
-        className="flex-1 flex flex-col justify-center items-center px-8 py-6"
+        className={cn(
+          "flex-1 flex flex-col justify-center items-center",
+          isFullscreen ? "px-6 py-4" : "px-5 py-3"
+        )}
       >
         {messages.length === 0 ? (
           <motion.div
@@ -82,79 +84,64 @@ const ConversationPanel = ({
             animate={{ opacity: 1 }}
           >
             <div className={cn(
-              "rounded-full bg-muted/30 flex items-center justify-center mb-3 transition-all",
-              isFullscreen ? "w-14 h-14" : "w-12 h-12"
+              "rounded-full bg-muted/20 flex items-center justify-center mb-2",
+              isFullscreen ? "w-12 h-12" : "w-10 h-10"
             )}>
               <Phone className={cn(
-                "text-muted-foreground/40 transition-all",
-                isFullscreen ? "w-6 h-6" : "w-5 h-5"
+                "text-muted-foreground/30",
+                isFullscreen ? "w-5 h-5" : "w-4 h-4"
               )} />
             </div>
             <p className={cn(
-              "text-muted-foreground/60 transition-all",
+              "text-muted-foreground/50",
               isFullscreen ? "text-sm" : "text-xs"
             )}>
-              Waiting for call...
+              Waiting...
             </p>
           </motion.div>
         ) : (
-          <div className="w-full max-w-md space-y-4">
-            <AnimatePresence mode="popLayout">
-              {visibleMessages.map((msg) => {
-                const isAmelia = msg.role === "amelia";
-                const isCurrent = msg.id === currentMessage?.id;
-                
-                return (
-                  <motion.div
-                    key={msg.id}
-                    className={cn(
-                      "transition-all",
-                      !isCurrent && "opacity-30"
-                    )}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ 
-                      opacity: isCurrent ? 1 : 0.3, 
-                      y: 0,
-                      scale: isCurrent ? 1 : 0.95
-                    }}
-                    exit={{ opacity: 0, y: -20, scale: 0.9 }}
-                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    {/* Speaker Label */}
-                    <div className={cn(
-                      "flex items-center gap-2 mb-2",
-                      isAmelia ? "justify-end" : "justify-start"
+          <div className="w-full max-w-sm">
+            <AnimatePresence mode="wait">
+              {currentMessage && (
+                <motion.div
+                  key={currentMessage.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  {/* Speaker Label - Compact */}
+                  <div className={cn(
+                    "flex items-center gap-1.5 mb-1.5",
+                    currentMessage.role === "amelia" ? "justify-end" : "justify-start"
+                  )}>
+                    <span className={cn(
+                      "text-[9px] uppercase tracking-widest font-semibold",
+                      currentMessage.role === "amelia" ? "text-enera-brand" : "text-muted-foreground/60"
                     )}>
-                      <span className={cn(
-                        "text-[10px] uppercase tracking-widest font-medium",
-                        isAmelia ? "text-enera-brand" : "text-muted-foreground/70"
-                      )}>
-                        {isAmelia ? "Amelia" : "Driver"}
-                      </span>
-                      {isCurrent && (
-                        <span className="flex gap-0.5">
-                          <span className="w-1 h-1 rounded-full bg-enera-brand animate-pulse" />
-                          <span className="w-1 h-1 rounded-full bg-enera-brand animate-pulse" style={{ animationDelay: "150ms" }} />
-                          <span className="w-1 h-1 rounded-full bg-enera-brand animate-pulse" style={{ animationDelay: "300ms" }} />
-                        </span>
-                      )}
-                    </div>
+                      {currentMessage.role === "amelia" ? "Amelia" : "Driver"}
+                    </span>
+                    <span className="flex gap-0.5">
+                      <span className="w-1 h-1 rounded-full bg-enera-brand/80 animate-pulse" />
+                      <span className="w-1 h-1 rounded-full bg-enera-brand/80 animate-pulse" style={{ animationDelay: "150ms" }} />
+                    </span>
+                  </div>
 
-                    {/* Message Text - Truncated for voice-first */}
-                    <p className={cn(
-                      "leading-relaxed transition-all",
-                      isFullscreen ? "text-lg" : "text-base",
-                      isAmelia ? "text-right text-foreground" : "text-left text-foreground/80",
-                      isCurrent && "font-medium"
-                    )}>
-                      {msg.content.length > 120 
-                        ? msg.content.slice(0, 120) + "..." 
-                        : msg.content
-                      }
-                    </p>
-                  </motion.div>
-                );
-              })}
+                  {/* Message Text - Larger, readable */}
+                  <p className={cn(
+                    "leading-snug font-medium",
+                    isFullscreen ? "text-xl" : "text-lg",
+                    currentMessage.role === "amelia" 
+                      ? "text-right text-foreground" 
+                      : "text-left text-foreground/90"
+                  )}>
+                    {currentMessage.content.length > 100 
+                      ? currentMessage.content.slice(0, 100) + "..." 
+                      : currentMessage.content
+                    }
+                  </p>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         )}
