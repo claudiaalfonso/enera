@@ -7,6 +7,7 @@ import PresentationControls from "@/components/demo/PresentationControls";
 import WelcomeOverlay from "@/components/demo/WelcomeOverlay";
 import LoadingState from "@/components/demo/LoadingState";
 import WaveBackground from "@/components/demo/WaveBackground";
+import SyncCalibrationOverlay from "@/components/demo/SyncCalibrationOverlay";
 import { useDemoSequence } from "@/hooks/useDemoSequence";
 import { cn } from "@/lib/utils";
 
@@ -235,7 +236,6 @@ const Index = () => {
               <SystemPanel
                 currentStatus={currentStatus}
                 isProcessing={isProcessing}
-                steps={steps}
                 showConfirmation={showConfirmation}
                 isFullscreen={isFullscreen}
               />
@@ -325,6 +325,22 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Dev Sync Calibration Overlay */}
+        <SyncCalibrationOverlay 
+          audioRef={audioRef}
+          currentPhrase={currentPhrase.messageId ? {
+            id: currentPhrase.messageId,
+            speaker: currentPhrase.role as "amelia" | "customer",
+            text: currentPhrase.visiblePhrases[currentPhrase.visiblePhrases.length - 1] || "",
+            startTime: currentPhrase.currentPhraseStartTime,
+            duration: currentPhrase.nextPhraseStartTime 
+              ? currentPhrase.nextPhraseStartTime - currentPhrase.currentPhraseStartTime 
+              : 2.5
+          } : null}
+          wordProgress={currentPhrase.wordProgress}
+          isPlaying={isPlaying}
+        />
 
         {/* Powered by Enera Footer Badge */}
         <motion.div

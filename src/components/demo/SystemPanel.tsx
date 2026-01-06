@@ -1,19 +1,15 @@
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import LiveStatusCard from "./LiveStatusCard";
-import ActionTimeline from "./ActionTimeline";
+import HeartbeatChip from "./HeartbeatChip";
 import ConfirmationState from "./ConfirmationState";
-import { TimelineStep } from "./TimelineItem";
 
 interface SystemPanelProps {
   currentStatus: string;
   isProcessing: boolean;
-  steps: TimelineStep[];
   showConfirmation: boolean;
   isFullscreen?: boolean;
 }
 
-const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isFullscreen = false }: SystemPanelProps) => {
+const SystemPanel = ({ currentStatus, isProcessing, showConfirmation, isFullscreen = false }: SystemPanelProps) => {
   const hasSignal = Boolean(currentStatus) || showConfirmation;
 
   return (
@@ -27,35 +23,29 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
           "font-medium text-muted-foreground/60",
           isFullscreen ? "text-xs" : "text-[11px]"
         )}>
-          What’s happening
+          What's happening
         </span>
       </div>
 
-      {/* Content */}
+      {/* Content - Centered heartbeat chips */}
       <div className={cn(
-        "flex-1 flex flex-col justify-center",
+        "flex-1 flex flex-col items-center justify-center",
         isFullscreen ? "px-6 py-4" : "px-5 py-3"
       )}>
         {/* Silence/noise = clean screen */}
         {!hasSignal ? null : (
-          <>
-            <LiveStatusCard status={currentStatus} isProcessing={isProcessing} isFullscreen={isFullscreen} />
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.05 }}
-            >
-              <ActionTimeline steps={steps} isFullscreen={isFullscreen} />
-            </motion.div>
+          <div className="flex flex-col items-center gap-3">
+            <HeartbeatChip 
+              status={currentStatus} 
+              isVisible={Boolean(currentStatus) && !showConfirmation} 
+              isFullscreen={isFullscreen} 
+            />
 
             {/* Confirmation State */}
             {showConfirmation && (
-              <div className="mt-4">
-                <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
-              </div>
+              <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -63,4 +53,3 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
 };
 
 export default SystemPanel;
-

@@ -450,13 +450,7 @@ export const useDemoSequence = () => {
       }
       setCurrentStepIndex(stepIdx);
 
-      // Check for completion
-      if (currentTime >= 130) {
-        setIsComplete(true);
-        setShowConfirmation(true);
-        setIsProcessing(false);
-        return;
-      }
+      // Completion is handled by 'ended' event - no hardcoded time check
 
       rafRef.current = requestAnimationFrame(syncWithAudio);
     };
