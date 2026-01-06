@@ -40,7 +40,7 @@ const CUE_SHEET: Cue[] = [
     id: "2", 
     speaker: "driver", 
     startTime: 10.97, 
-    endTime: 25.5, 
+    endTime: 23.5, 
     chunks: [
       { t: 10.97, text: "Hi, I'm trying to use" },
       { t: 12.17, text: "the charger at the Church Street car park" },
@@ -55,14 +55,14 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "3", 
     speaker: "amelia", 
-    startTime: 25.0, 
-    endTime: 35.0, 
+    startTime: 24.9, 
+    endTime: 34.5, 
     chunks: [
-      { t: 25.0, text: "I'm sorry you're having trouble." },
-      { t: 26.7, text: "Let me look into that for you." },
-      { t: 28.5, text: "You're in Market Harborough." },
-      { t: 30.3, text: "Can you just confirm" },
-      { t: 31.5, text: "the charger ID is MH-102-B?" }
+      { t: 24.9, text: "I'm sorry you're having trouble." },
+      { t: 26.5, text: "Let me look into that for you." },
+      { t: 28.0, text: "You're in Market Harborough." },
+      { t: 29.95, text: "Can you just confirm" },
+      { t: 31.2, text: "the charger ID is MH-102-B?" }
     ]
   },
   { 
