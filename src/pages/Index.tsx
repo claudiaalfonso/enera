@@ -5,6 +5,8 @@ import SystemPanel from "@/components/demo/SystemPanel";
 import ConversationPanel from "@/components/demo/ConversationPanel";
 import PresentationControls from "@/components/demo/PresentationControls";
 import WelcomeOverlay from "@/components/demo/WelcomeOverlay";
+import LoadingState from "@/components/demo/LoadingState";
+import WaveBackground from "@/components/demo/WaveBackground";
 import { useDemoSequence } from "@/hooks/useDemoSequence";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +71,7 @@ const controlsVariants = {
 };
 
 const Index = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(true);
   const [demoStarted, setDemoStarted] = useState(false);
 
@@ -95,6 +98,14 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+
+  // Simulate loading state for assets
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle compact mode toggle
   const toggleCompact = useCallback(() => {
@@ -174,16 +185,24 @@ const Index = () => {
 
   return (
     <div className={cn(
-      "h-screen flex flex-col overflow-hidden bg-background page-gradient",
+      "h-screen flex flex-col overflow-hidden bg-background",
       isFullscreen && "presentation-mode"
     )}>
+      {/* Wave Background Animation */}
+      <WaveBackground opacity={showWelcome || isLoading ? 0 : 0.8} />
+
       {/* SEO */}
       <title>Amelia Voice AI Demo | Enera</title>
       <meta name="description" content="Experience Amelia, Enera's intelligent Voice AI that resolves EV charging issues in real-time. Enterprise-grade support automation." />
 
+      {/* Loading State */}
+      <AnimatePresence>
+        {isLoading && <LoadingState />}
+      </AnimatePresence>
+
       {/* Welcome Overlay */}
       <AnimatePresence>
-        {showWelcome && (
+        {!isLoading && showWelcome && (
           <WelcomeOverlay onStart={handleStartDemo} />
         )}
       </AnimatePresence>
