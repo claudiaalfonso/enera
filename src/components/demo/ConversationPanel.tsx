@@ -23,8 +23,8 @@ const estimateLines = (text: string, charsPerLine: number = 42): number => {
 // Get visible chunks that fit within maxLines, but always keep at least minChunks
 const getDisplayChunks = (
   chunks: PhraseChunk[], 
-  maxLines: number = 5, 
-  minChunks: number = 3
+  maxLines: number = 6, 
+  minChunks: number = 4
 ): PhraseChunk[] => {
   if (chunks.length === 0) return [];
   
