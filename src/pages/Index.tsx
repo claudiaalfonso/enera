@@ -83,7 +83,6 @@ const Index = () => {
     showConfirmation,
     isComplete,
     isPlaying,
-    playMode,
     currentStepIndex,
     totalSteps,
     currentPhrase,
@@ -91,10 +90,9 @@ const Index = () => {
     goToNext,
     goToPrevious,
     togglePlayPause,
-    switchMode,
     audioRef,
     startDemo
-  } = useDemoSequence("manual"); // Start in manual mode, will switch to auto on start
+  } = useDemoSequence();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -119,10 +117,9 @@ const Index = () => {
     // Small delay for overlay fade out
     setTimeout(() => {
       setDemoStarted(true);
-      switchMode("auto");
       startDemo();
     }, 300);
-  }, [switchMode, startDemo]);
+  }, [startDemo]);
 
   // Handle fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -230,9 +227,9 @@ const Index = () => {
             isFullscreen ? "max-w-6xl" : "max-w-5xl",
             "mx-auto"
           )}>
-            {/* Left Panel - System View */}
+            {/* Left Panel - System View (60%) */}
             <motion.div
-              className="border-r border-border/30 bg-card/40 backdrop-blur-sm w-1/2"
+              className="border-r border-border/30 bg-card/40 backdrop-blur-sm w-3/5"
               variants={leftPanelVariants}
             >
               <SystemPanel
@@ -244,14 +241,14 @@ const Index = () => {
               />
             </motion.div>
 
-            {/* Right Panel - Conversation */}
+            {/* Right Panel - Conversation (40%) */}
             <motion.div
-              className="bg-enera-surface-elevated/60 backdrop-blur-sm w-1/2"
+              className="bg-enera-surface-elevated/60 backdrop-blur-sm w-2/5"
               variants={rightPanelVariants}
             >
-              <ConversationPanel 
-                messages={messages} 
-                isFullscreen={isFullscreen} 
+              <ConversationPanel
+                messages={messages}
+                isFullscreen={isFullscreen}
                 audioRef={audioRef}
                 isPlaying={isPlaying}
                 currentPhrase={currentPhrase}
@@ -272,7 +269,6 @@ const Index = () => {
               <PresentationControls
                 isPlaying={isPlaying}
                 isComplete={isComplete}
-                playMode={playMode}
                 currentStep={currentStepIndex}
                 totalSteps={totalSteps}
                 isFullscreen={isFullscreen}
@@ -281,7 +277,6 @@ const Index = () => {
                 onTogglePlay={togglePlayPause}
                 onNext={goToNext}
                 onPrevious={goToPrevious}
-                onSwitchMode={switchMode}
                 onToggleFullscreen={toggleFullscreen}
                 onToggleMute={toggleMute}
                 onToggleCompact={toggleCompact}

@@ -2,12 +2,10 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Volume2, VolumeX, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PlayMode } from "@/hooks/useDemoSequence";
 
 interface PresentationControlsProps {
   isPlaying: boolean;
   isComplete: boolean;
-  playMode: PlayMode;
   currentStep: number;
   totalSteps: number;
   isFullscreen: boolean;
@@ -16,7 +14,6 @@ interface PresentationControlsProps {
   onTogglePlay: () => void;
   onNext: () => void;
   onPrevious: () => void;
-  onSwitchMode: (mode: PlayMode) => void;
   onToggleFullscreen: () => void;
   onToggleMute: () => void;
   onToggleCompact: () => void;
@@ -26,15 +23,14 @@ interface PresentationControlsProps {
 const PresentationControls = ({
   isPlaying,
   isComplete,
-  playMode,
   currentStep,
   totalSteps,
   isFullscreen,
   isMuted,
+  isCompact,
   onTogglePlay,
   onNext,
   onPrevious,
-  onSwitchMode,
   onToggleFullscreen,
   onToggleMute,
   onToggleCompact,
@@ -60,34 +56,9 @@ const PresentationControls = ({
       </div>
 
       <div className="flex items-center justify-between px-6 py-2.5">
-        {/* Left: Mode switcher */}
+        {/* Left: Step indicator */}
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg bg-muted/50 p-0.5">
-            <button
-              onClick={() => onSwitchMode("auto")}
-              className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
-                playMode === "auto" 
-                  ? "bg-card text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Auto
-            </button>
-            <button
-              onClick={() => onSwitchMode("manual")}
-              className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-md transition-all",
-                playMode === "manual" 
-                  ? "bg-card text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Manual
-            </button>
-          </div>
-          
-          <span className="text-xs text-muted-foreground ml-2">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {Math.max(1, currentStep + 1)} / {totalSteps}
           </span>
         </div>
@@ -103,7 +74,7 @@ const PresentationControls = ({
           >
             <SkipBack className="h-4 w-4" />
           </Button>
-          
+
           <Button
             size="sm"
             onClick={isComplete ? onReset : onTogglePlay}
@@ -117,7 +88,7 @@ const PresentationControls = ({
               <Play className="h-4 w-4 ml-0.5" />
             )}
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -143,7 +114,7 @@ const PresentationControls = ({
               <Volume2 className="h-4 w-4" />
             )}
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -157,7 +128,7 @@ const PresentationControls = ({
               <Maximize2 className="h-4 w-4" />
             )}
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -165,7 +136,7 @@ const PresentationControls = ({
             className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
             title="Hide controls (C)"
           >
-            <EyeOff className="h-4 w-4" />
+            {isCompact ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -174,3 +145,4 @@ const PresentationControls = ({
 };
 
 export default PresentationControls;
+

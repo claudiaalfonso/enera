@@ -14,6 +14,8 @@ interface SystemPanelProps {
 }
 
 const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isFullscreen = false }: SystemPanelProps) => {
+  const hasSignal = Boolean(currentStatus) || showConfirmation;
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Compact Header */}
@@ -25,30 +27,35 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
           "font-medium text-muted-foreground/60",
           isFullscreen ? "text-xs" : "text-[11px]"
         )}>
-          System
+          What’s happening
         </span>
       </div>
 
-      {/* Content - Compact, centered */}
+      {/* Content */}
       <div className={cn(
         "flex-1 flex flex-col justify-center",
         isFullscreen ? "px-6 py-4" : "px-5 py-3"
       )}>
-        <LiveStatusCard status={currentStatus} isProcessing={isProcessing} isFullscreen={isFullscreen} />
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.05 }}
-        >
-          <ActionTimeline steps={steps} isFullscreen={isFullscreen} />
-        </motion.div>
+        {/* Silence/noise = clean screen */}
+        {!hasSignal ? null : (
+          <>
+            <LiveStatusCard status={currentStatus} isProcessing={isProcessing} isFullscreen={isFullscreen} />
 
-        {/* Confirmation State */}
-        {showConfirmation && (
-          <div className="mt-4">
-            <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
-          </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.05 }}
+            >
+              <ActionTimeline steps={steps} isFullscreen={isFullscreen} />
+            </motion.div>
+
+            {/* Confirmation State */}
+            {showConfirmation && (
+              <div className="mt-4">
+                <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -56,3 +63,4 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
 };
 
 export default SystemPanel;
+

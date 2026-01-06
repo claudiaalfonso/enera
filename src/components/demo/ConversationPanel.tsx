@@ -76,24 +76,6 @@ const ConversationPanel = ({
 
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
-      {/* Border pulse effect on speaker change */}
-      <AnimatePresence>
-        {hasContent && (
-          <motion.div
-            key={`border-pulse-${speakerChangeKey}`}
-            className={cn(
-              "absolute inset-0 rounded-xl pointer-events-none z-10",
-              isAmelia 
-                ? "ring-2 ring-enera-brand/30" 
-                : "ring-2 ring-muted-foreground/20"
-            )}
-            initial={{ opacity: 0.6, scale: 1 }}
-            animate={{ opacity: 0, scale: 1.005 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Header - Compact */}
       <div className={cn(
         "flex-shrink-0 border-b border-border/20 bg-enera-surface-elevated/20 transition-all",
@@ -120,10 +102,10 @@ const ConversationPanel = ({
 
           {/* Audio Visualizer */}
           {audioRef && (
-            <AudioVisualizer 
-              audioRef={audioRef} 
-              isPlaying={isPlaying} 
-              isFullscreen={isFullscreen} 
+            <AudioVisualizer
+              audioRef={audioRef}
+              isPlaying={isPlaying}
+              isFullscreen={isFullscreen}
             />
           )}
         </div>
@@ -137,156 +119,77 @@ const ConversationPanel = ({
           isFullscreen ? "px-8 py-6" : "px-6 py-4"
         )}
       >
-        {!hasContent ? (
-          // Empty state - NOTHING during silence
-          <motion.div
-            className="flex flex-col items-center justify-center text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className={cn(
-              "rounded-full bg-muted/20 flex items-center justify-center mb-2",
-              isFullscreen ? "w-12 h-12" : "w-10 h-10"
-            )}>
-              <Phone className={cn(
-                "text-muted-foreground/30",
-                isFullscreen ? "w-5 h-5" : "w-4 h-4"
-              )} />
-            </div>
-            <p className={cn(
-              "text-muted-foreground/50",
-              isFullscreen ? "text-sm" : "text-xs"
-            )}>
-              Waiting...
-            </p>
-          </motion.div>
-        ) : (
-          <div className="w-full max-w-md relative">
-            {/* Enhanced background glow */}
-            <AnimatePresence mode="wait">
+        {/* Silence/noise = clean screen */}
+        {!hasContent ? null : (
+          <div className="w-full max-w-md">
+            <motion.div
+              key={currentPhrase?.messageId}
+              initial={{ opacity: 0, x: isAmelia ? 10 : -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: isAmelia ? -10 : 10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              {/* Speaker Label */}
               <motion.div
-                key={`glow-${currentPhrase?.role}-${speakerChangeKey}`}
                 className={cn(
-                  "absolute -inset-8 -z-10 rounded-3xl blur-3xl pointer-events-none",
-                  isAmelia 
-                    ? "bg-enera-brand" 
-                    : "bg-muted-foreground"
+                  "flex items-center gap-2 mb-3",
+                  isAmelia ? "justify-end" : "justify-start"
                 )}
-                initial={{ opacity: 0, scale: 0.7 }}
-                animate={{ 
-                  opacity: isAmelia ? 0.2 : 0.12,
-                  scale: 1.1,
-                  x: isAmelia ? "12%" : "-12%"
-                }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            </AnimatePresence>
-
-            {/* Active message with word-by-word reveal */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPhrase?.messageId}
-                initial={{ opacity: 0, x: isAmelia ? 15 : -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: isAmelia ? -10 : 10 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15 }}
               >
-                {/* Speaker Label */}
-                <motion.div 
-                  className={cn(
-                    "flex items-center gap-1.5 mb-3",
-                    isAmelia ? "justify-end" : "justify-start"
-                  )}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.05, duration: 0.2 }}
-                >
-                  <span className={cn(
-                    "text-[10px] uppercase tracking-widest font-semibold",
-                    isAmelia ? "text-enera-brand" : "text-muted-foreground/60"
-                  )}>
-                    {isAmelia ? "Amelia" : "Driver"}
-                  </span>
-                  <motion.span 
-                    className="flex gap-0.5"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1, duration: 0.2 }}
-                  >
-                    <span className={cn(
-                      "w-1.5 h-1.5 rounded-full animate-pulse",
-                      isAmelia ? "bg-enera-brand/80" : "bg-muted-foreground/40"
-                    )} />
-                    <span 
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full animate-pulse",
-                        isAmelia ? "bg-enera-brand/80" : "bg-muted-foreground/40"
-                      )} 
-                      style={{ animationDelay: "150ms" }} 
-                    />
-                  </motion.span>
-                </motion.div>
-
-                {/* Word-by-word reveal synced to audio */}
-                <p className={cn(
-                  "leading-relaxed font-medium",
-                  isFullscreen ? "text-xl" : "text-lg",
-                  isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
+                <span className={cn(
+                  "text-[10px] uppercase tracking-widest font-semibold",
+                  isAmelia ? "text-enera-brand" : "text-muted-foreground/60"
                 )}>
-                  {wordsToShow.map((word, idx) => {
-                    const isLatest = idx === latestWordIndex;
-                    const isRecent = idx >= latestWordIndex - 2;
-                    
-                    return (
-                      <motion.span
-                        key={`${currentPhrase?.messageId}-word-${idx}`}
-                        className={cn(
-                          "inline-block mr-[0.25em]",
-                          !isRecent && "opacity-60"
-                        )}
-                        initial={{ 
-                          opacity: 0, 
-                          y: 6,
-                          scale: 0.94
-                        }}
-                        animate={{ 
-                          opacity: isRecent ? 1 : 0.6, 
-                          y: 0,
-                          scale: 1
-                        }}
-                        transition={{ 
-                          duration: 0.18,
-                          ease: [0.25, 0.1, 0.25, 1]
-                        }}
-                      >
-                        {isLatest ? (
-                          <span className="relative">
-                            <span className={cn(
-                              isAmelia ? "text-enera-brand" : "text-foreground"
-                            )}>
-                              {word}
-                            </span>
-                            {/* Glow on latest word */}
-                            <motion.span
-                              className={cn(
-                                "absolute -inset-1 -z-10 blur-sm rounded",
-                                isAmelia ? "bg-enera-brand/20" : "bg-foreground/8"
-                              )}
-                              initial={{ opacity: 0.7, scale: 1.1 }}
-                              animate={{ opacity: 0, scale: 1 }}
-                              transition={{ duration: 0.35 }}
-                            />
-                          </span>
-                        ) : (
-                          word
-                        )}
-                      </motion.span>
-                    );
-                  })}
-                </p>
+                  {isAmelia ? "Amelia" : "Driver"}
+                </span>
+                <span className="flex gap-1">
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    isAmelia ? "bg-enera-brand/70" : "bg-muted-foreground/35"
+                  )} />
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    isAmelia ? "bg-enera-brand/35" : "bg-muted-foreground/20"
+                  )} />
+                </span>
               </motion.div>
-            </AnimatePresence>
+
+              {/* Word-by-word reveal synced to audio */}
+              <p className={cn(
+                "leading-relaxed font-medium",
+                isFullscreen ? "text-xl" : "text-lg",
+                isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
+              )}>
+                {wordsToShow.map((word, idx) => {
+                  const isLatest = idx === latestWordIndex;
+                  const isRecent = idx >= latestWordIndex - 2;
+
+                  return (
+                    <motion.span
+                      key={`${currentPhrase?.messageId}-word-${idx}`}
+                      className={cn(
+                        "inline-block mr-[0.25em]",
+                        !isRecent && "opacity-60"
+                      )}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: isRecent ? 1 : 0.6, y: 0 }}
+                      transition={{ duration: 0.14, ease: "easeOut" }}
+                    >
+                      {isLatest ? (
+                        <span className={cn(isAmelia ? "text-enera-brand" : "text-foreground")}>
+                          {word}
+                        </span>
+                      ) : (
+                        word
+                      )}
+                    </motion.span>
+                  );
+                })}
+              </p>
+            </motion.div>
           </div>
         )}
       </div>
@@ -295,3 +198,4 @@ const ConversationPanel = ({
 };
 
 export default ConversationPanel;
+

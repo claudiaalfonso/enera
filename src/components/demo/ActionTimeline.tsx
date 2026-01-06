@@ -12,30 +12,13 @@ const ActionTimeline = ({ steps, isFullscreen = false }: ActionTimelineProps) =>
   // Only show active step (minimal, voice-first)
   const activeStep = steps.find(s => s.status === "active");
   const lastCompleted = steps.filter(s => s.status === "completed").slice(-1)[0];
-  
+
   // Show max 2: last completed (faded) + active
   const visibleSteps = [lastCompleted, activeStep].filter(Boolean) as TimelineStep[];
-  
-  if (visibleSteps.length === 0) {
-    return (
-      <div className={cn(
-        "flex items-center gap-2 py-3",
-        isFullscreen && "py-4"
-      )}>
-        <div className="flex gap-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/20 animate-pulse" />
-          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/20 animate-pulse" style={{ animationDelay: '100ms' }} />
-          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/20 animate-pulse" style={{ animationDelay: '200ms' }} />
-        </div>
-        <span className={cn(
-          "text-muted-foreground/50",
-          isFullscreen ? "text-sm" : "text-xs"
-        )}>
-          Waiting...
-        </span>
-      </div>
-    );
-  }
+
+  // Silence/noise = clean screen
+  if (visibleSteps.length === 0) return null;
+
 
   return (
     <motion.div

@@ -155,6 +155,40 @@ const TIMED_TRANSCRIPT: TimedMessage[] = [
   }
 ];
 
+type FlatPhraseBase = {
+  messageId: string;
+  role: "driver" | "amelia";
+  phraseIndex: number;
+  text: string;
+  startTime: number;
+};
+
+type FlatPhrase = FlatPhraseBase & {
+  nextStartTime: number | null;
+};
+
+const FLAT_PHRASES_BASE: FlatPhraseBase[] = TIMED_TRANSCRIPT.flatMap((msg) =>
+  msg.phrases.map((p, phraseIndex) => ({
+    messageId: msg.id,
+    role: msg.role,
+    phraseIndex,
+    text: p.text,
+    startTime: p.startTime,
+  }))
+);
+
+const FLAT_PHRASES: FlatPhrase[] = FLAT_PHRASES_BASE.map((p, idx) => ({
+  ...p,
+  nextStartTime: FLAT_PHRASES_BASE[idx + 1]?.startTime ?? null,
+}));
+
+const estimateSpeechDuration = (text: string, role: "driver" | "amelia") => {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  // Amelia is slightly slower/more deliberate in the recording.
+  const secondsPerWord = role === "amelia" ? 0.31 : 0.28;
+  return Math.min(5, Math.max(0.8, words * secondsPerWord));
+};
+
 // Build flat message array for compatibility
 const CONVERSATION: Message[] = TIMED_TRANSCRIPT.map(tm => ({
   id: tm.id,
@@ -183,7 +217,7 @@ const STATUS_MESSAGES = [
   "Running diagnostics",
   "Reader frozen",
   "Resetting reader",
-  "Upsell opportunity",
+  "Upsell offered",
   "Charger available",
   "Session active",
   "Call complete"
@@ -211,13 +245,11 @@ const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
   { statusIndex: 5, time: 44.5 },  // Running diagnostics
   { statusIndex: 6, time: 49.5 },  // Reader frozen
   { statusIndex: 7, time: 54 },    // Resetting reader
-  { statusIndex: 8, time: 71.5 },  // Upsell opportunity
+  { statusIndex: 8, time: 71.5 },  // Upsell offered
   { statusIndex: 9, time: 94 },    // Charger available
   { statusIndex: 10, time: 105.5 },// Session active
   { statusIndex: 11, time: 126 },  // Call complete
 ];
-
-export type PlayMode = "auto" | "manual";
 
 // Current phrase display state
 export interface CurrentPhraseState {
@@ -230,18 +262,17 @@ export interface CurrentPhraseState {
   nextPhraseStartTime: number | null; // Start time of next phrase (for interpolation)
 }
 
-export const useDemoSequence = (initialMode: PlayMode = "auto") => {
+export const useDemoSequence = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [steps, setSteps] = useState<TimelineStep[]>(createInitialSteps());
   const [currentStatus, setCurrentStatus] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [playMode, setPlayMode] = useState<PlayMode>(initialMode);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [hasStarted, setHasStarted] = useState(false);
-  
+
   // Phrase-level state for kinetic captions
   const [currentPhrase, setCurrentPhrase] = useState<CurrentPhraseState>({
     messageId: null,
@@ -252,7 +283,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     currentPhraseStartTime: 0,
     nextPhraseStartTime: null
   });
-  
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
@@ -262,16 +293,16 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     audioRef.current = new Audio("/audio/demo-conversation.m4a");
     audioRef.current.preload = "auto";
     audioRef.current.volume = 1.0;
-    
+
     const handleEnded = () => {
       setIsComplete(true);
       setShowConfirmation(true);
       setIsProcessing(false);
       setIsPlaying(false);
     };
-    
+
     audioRef.current.addEventListener("ended", handleEnded);
-    
+
     return () => {
       if (audioRef.current) {
         audioRef.current.removeEventListener("ended", handleEnded);
@@ -286,13 +317,13 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
 
   // Audio-driven sync loop - phrase-level precision
   useEffect(() => {
-    if (!hasStarted || !isPlaying || isComplete || playMode !== "auto") return;
+    if (!hasStarted || !isPlaying || isComplete) return;
 
     const syncWithAudio = () => {
       if (!audioRef.current) return;
-      
+
       const currentTime = audioRef.current.currentTime;
-      
+
       // RULE: Before first speech (< 4.5s), show NOTHING (background noise)
       if (currentTime < 4.5) {
         setCurrentPhrase({
@@ -305,94 +336,87 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
           nextPhraseStartTime: null
         });
         setCurrentStatus("");
+        setIsProcessing(false);
         setMessages([]);
         rafRef.current = requestAnimationFrame(syncWithAudio);
         return;
       }
-      
-      // Find current message and visible phrases based on time
-      let activeMessage: TimedMessage | null = null;
-      let visiblePhrases: string[] = [];
-      let latestPhraseIndex = -1;
-      
-      for (const msg of TIMED_TRANSCRIPT) {
-        const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
-        const lastPhraseTime = msg.phrases[msg.phrases.length - 1]?.startTime ?? 0;
-        
-        // Check if we're within this message's time window
-        if (currentTime >= firstPhraseTime) {
-          // Find which phrases are visible
-          const phrases: string[] = [];
-          let lastVisibleIdx = -1;
-          
-          for (let i = 0; i < msg.phrases.length; i++) {
-            if (currentTime >= msg.phrases[i].startTime) {
-              phrases.push(msg.phrases[i].text);
-              lastVisibleIdx = i;
-            }
-          }
-          
-          if (phrases.length > 0) {
-            activeMessage = msg;
-            visiblePhrases = phrases;
-            latestPhraseIndex = lastVisibleIdx;
-          }
+
+      // Find the currently speaking phrase.
+      // If nobody is speaking (silence/noise), show NOTHING.
+      let activePhrase: FlatPhrase | null = null;
+      for (const phrase of FLAT_PHRASES) {
+        if (currentTime < phrase.startTime) break;
+
+        const estimatedDuration = estimateSpeechDuration(phrase.text, phrase.role);
+        const hardEnd = phrase.nextStartTime ?? Infinity;
+        const endTime = Math.min(hardEnd, phrase.startTime + estimatedDuration);
+
+        if (currentTime >= phrase.startTime && currentTime < endTime) {
+          activePhrase = phrase;
         }
       }
-      
-      // Update phrase state with word progress
-      if (activeMessage) {
-        // Calculate word progress within current phrase
-        const currentPhraseObj = activeMessage.phrases[latestPhraseIndex];
-        const nextPhraseObj = activeMessage.phrases[latestPhraseIndex + 1];
-        const currentPhraseStart = currentPhraseObj?.startTime ?? 0;
-        const nextPhraseStart = nextPhraseObj?.startTime ?? null;
-        
-        // Calculate progress through current phrase
-        let wordProgress = 1;
-        if (nextPhraseStart !== null) {
-          const phraseDuration = nextPhraseStart - currentPhraseStart;
-          const elapsed = currentTime - currentPhraseStart;
-          wordProgress = Math.min(1, Math.max(0, elapsed / phraseDuration));
-        } else {
-          // Last phrase - estimate based on word count (~0.15s per word)
-          const words = currentPhraseObj?.text.split(" ").length ?? 1;
-          const estimatedDuration = words * 0.15;
-          const elapsed = currentTime - currentPhraseStart;
-          wordProgress = Math.min(1, Math.max(0, elapsed / estimatedDuration));
-        }
-        
+
+      if (!activePhrase) {
         setCurrentPhrase({
-          messageId: activeMessage.id,
-          role: activeMessage.role,
-          visiblePhrases,
-          latestPhraseIndex,
-          wordProgress,
-          currentPhraseStartTime: currentPhraseStart,
-          nextPhraseStartTime: nextPhraseStart
+          messageId: null,
+          role: null,
+          visiblePhrases: [],
+          latestPhraseIndex: -1,
+          wordProgress: 0,
+          currentPhraseStartTime: 0,
+          nextPhraseStartTime: null
         });
-        
-        // Build completed messages (all messages before current)
-        if (activeMessage.id !== lastMessageIdRef.current) {
-          const completedMessages: Message[] = [];
-          for (const msg of TIMED_TRANSCRIPT) {
-            if (msg.id === activeMessage.id) break;
-            const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
-            if (currentTime >= firstPhraseTime) {
-              completedMessages.push({
-                id: msg.id,
-                role: msg.role,
-                content: msg.phrases.map(p => p.text).join(" ")
-              });
-            }
-          }
-          setMessages(completedMessages);
-          lastMessageIdRef.current = activeMessage.id;
-        }
-        
-        setIsProcessing(true);
+        setCurrentStatus("");
+        setIsProcessing(false);
+        rafRef.current = requestAnimationFrame(syncWithAudio);
+        return;
       }
-      
+
+      // Build phrase window (max 2 phrases) for current message
+      const activeMessage = TIMED_TRANSCRIPT.find(m => m.id === activePhrase!.messageId) ?? null;
+      const latestPhraseIndex = activePhrase.phraseIndex;
+
+      const visiblePhrases = activeMessage
+        ? activeMessage.phrases
+            .slice(Math.max(0, latestPhraseIndex - 1), latestPhraseIndex + 1)
+            .map(p => p.text)
+        : [activePhrase.text];
+
+      const estimatedDuration = estimateSpeechDuration(activePhrase.text, activePhrase.role);
+      const elapsed = currentTime - activePhrase.startTime;
+      const wordProgress = Math.min(1, Math.max(0, elapsed / estimatedDuration));
+
+      setCurrentPhrase({
+        messageId: activePhrase.messageId,
+        role: activePhrase.role,
+        visiblePhrases,
+        latestPhraseIndex,
+        wordProgress,
+        currentPhraseStartTime: activePhrase.startTime,
+        nextPhraseStartTime: activePhrase.nextStartTime
+      });
+
+      // Build completed messages (all messages before current)
+      if (activePhrase.messageId !== lastMessageIdRef.current) {
+        const completedMessages: Message[] = [];
+        for (const msg of TIMED_TRANSCRIPT) {
+          if (msg.id === activePhrase.messageId) break;
+          const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
+          if (currentTime >= firstPhraseTime) {
+            completedMessages.push({
+              id: msg.id,
+              role: msg.role,
+              content: msg.phrases.map(p => p.text).join(" ")
+            });
+          }
+        }
+        setMessages(completedMessages);
+        lastMessageIdRef.current = activePhrase.messageId;
+      }
+
+      setIsProcessing(true);
+
       // Update status based on time (AFTER speech)
       let newStatusIndex = 0;
       for (const trigger of STATUS_TRIGGERS) {
@@ -401,7 +425,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         }
       }
       setCurrentStatus(STATUS_MESSAGES[newStatusIndex]);
-      
+
       // Update timeline steps
       const newSteps = createInitialSteps();
       for (const trigger of STEP_TRIGGERS) {
@@ -415,7 +439,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         }
       }
       setSteps(newSteps);
-      
+
       // Track step index for progress
       let stepIdx = -1;
       for (let i = STEP_TRIGGERS.length - 1; i >= 0; i--) {
@@ -425,7 +449,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         }
       }
       setCurrentStepIndex(stepIdx);
-      
+
       // Check for completion
       if (currentTime >= 130) {
         setIsComplete(true);
@@ -433,24 +457,24 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         setIsProcessing(false);
         return;
       }
-      
+
       rafRef.current = requestAnimationFrame(syncWithAudio);
     };
-    
+
     rafRef.current = requestAnimationFrame(syncWithAudio);
-    
+
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [hasStarted, isPlaying, isComplete, playMode]);
+  }, [hasStarted, isPlaying, isComplete]);
 
   const goToNext = useCallback(() => {
     // Find next message start time
     if (!audioRef.current) return;
     const currentTime = audioRef.current.currentTime;
-    
+
     for (const msg of TIMED_TRANSCRIPT) {
       const firstPhraseTime = msg.phrases[0]?.startTime ?? Infinity;
       if (firstPhraseTime > currentTime + 0.5) {
@@ -458,7 +482,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         return;
       }
     }
-    
+
     // No more messages, go to end
     setIsComplete(true);
     setShowConfirmation(true);
@@ -470,7 +494,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const goToPrevious = useCallback(() => {
     if (!audioRef.current) return;
     const currentTime = audioRef.current.currentTime;
-    
+
     // Find previous message start
     let prevTime = 0;
     for (const msg of TIMED_TRANSCRIPT) {
@@ -481,7 +505,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         break;
       }
     }
-    
+
     audioRef.current.currentTime = prevTime;
     setIsComplete(false);
     setShowConfirmation(false);
@@ -492,7 +516,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
       reset();
       return;
     }
-    
+
     setIsPlaying(prev => {
       const newPlaying = !prev;
       if (audioRef.current) {
@@ -535,15 +559,6 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     lastMessageIdRef.current = null;
   }, []);
 
-  const switchMode = useCallback((mode: PlayMode) => {
-    setPlayMode(mode);
-    if (mode === "manual") {
-      setIsPlaying(false);
-      if (audioRef.current) audioRef.current.pause();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    }
-  }, []);
-
   const startDemo = useCallback(() => {
     setHasStarted(true);
     setIsPlaying(true);
@@ -561,7 +576,6 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     showConfirmation,
     isComplete,
     isPlaying,
-    playMode,
     currentStepIndex,
     totalSteps: STEP_TRIGGERS.length,
     currentPhrase,
@@ -569,8 +583,8 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     goToNext,
     goToPrevious,
     togglePlayPause,
-    switchMode,
     audioRef,
     startDemo
   };
 };
+
