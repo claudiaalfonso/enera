@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import eneraLogo from "@/assets/enera-logo.png";
+import eneraWaveIcon from "@/assets/enera-wave-icon.png";
 
 interface DemoHeaderProps {
   isFullscreen?: boolean;
@@ -18,15 +18,27 @@ const DemoHeader = ({ isFullscreen = false }: DemoHeaderProps) => {
       transition={{ duration: 0.4 }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3">
-        <img 
-          src={eneraLogo} 
-          alt="Enera" 
-          className={cn(
-            "object-contain transition-all",
-            isFullscreen ? "h-11" : "h-9"
-          )}
-        />
+      <div className="flex items-center gap-2.5">
+        {/* Wave icon in styled container */}
+        <div className="relative">
+          <div className="bg-white rounded-xl shadow-sm shadow-enera-brand/5 p-1.5 border border-enera-brand/8">
+            <img 
+              src={eneraWaveIcon} 
+              alt="" 
+              className={cn(
+                "object-contain transition-all",
+                isFullscreen ? "h-8 w-8" : "h-6 w-6"
+              )}
+            />
+          </div>
+        </div>
+        {/* Enera text */}
+        <span className={cn(
+          "font-medium tracking-tight text-enera-brand transition-all",
+          isFullscreen ? "text-xl" : "text-lg"
+        )}>
+          Enera
+        </span>
       </div>
 
       {/* Right side - Amelia status */}

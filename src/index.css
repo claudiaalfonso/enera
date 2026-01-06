@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    /* Enera Brand - Extracted from logo: teal/sea green */
-    --enera-brand: 168 45% 38%;
-    --enera-brand-light: 168 35% 92%;
+    /* Enera Brand - Matched to website teal */
+    --enera-brand: 168 48% 40%;
+    --enera-brand-light: 168 35% 94%;
     
-    /* Background with subtle warmth */
-    --background: 180 8% 97%;
+    /* Background with warm stone gray (matched to website) */
+    --background: 40 6% 96%;
     --foreground: 200 20% 15%;
 
     --card: 0 0% 100%;
