@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,33 @@ const ConversationPanel = ({
     }
   }, [currentSpeaker, prevSpeaker]);
 
+  // Calculate words to show based on audio-synced progress
+  const { wordsToShow, latestWordIndex } = useMemo(() => {
+    if (!currentPhrase?.visiblePhrases || currentPhrase.visiblePhrases.length === 0) {
+      return { wordsToShow: [], latestWordIndex: -1 };
+    }
+    
+    // Get all completed phrases (full words)
+    const completedPhrases = currentPhrase.visiblePhrases.slice(0, -1);
+    const completedWords = completedPhrases.flatMap(p => p.split(" "));
+    
+    // Get current phrase and calculate partial word reveal
+    const currentPhraseText = currentPhrase.visiblePhrases[currentPhrase.visiblePhrases.length - 1];
+    const currentPhraseWords = currentPhraseText.split(" ");
+    
+    // Use wordProgress to determine how many words of current phrase to show
+    const progress = currentPhrase.wordProgress ?? 1;
+    const wordsInCurrentPhrase = Math.ceil(progress * currentPhraseWords.length);
+    const revealedCurrentWords = currentPhraseWords.slice(0, wordsInCurrentPhrase);
+    
+    const allWords = [...completedWords, ...revealedCurrentWords];
+    
+    return { 
+      wordsToShow: allWords, 
+      latestWordIndex: allWords.length - 1 
+    };
+  }, [currentPhrase?.visiblePhrases, currentPhrase?.wordProgress]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
@@ -43,47 +70,7 @@ const ConversationPanel = ({
         behavior: "smooth",
       });
     }
-  }, [currentPhrase?.visiblePhrases.length]);
-
-  // Kinetic caption animation - subtle pop with micro-bounce
-  const phraseVariants = {
-    initial: { 
-      opacity: 0, 
-      y: 6,
-      scale: 0.98
-    },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.25,
-        ease: [0.25, 0.1, 0.25, 1.0] as const,
-      }
-    },
-    exit: { 
-      opacity: 0.4,
-      transition: { duration: 0.15 }
-    }
-  };
-
-  // Latest phrase gets subtle emphasis
-  const latestPhraseVariants = {
-    initial: { 
-      opacity: 0, 
-      y: 8,
-      scale: 0.96
-    },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.3,
-        ease: [0.34, 1.56, 0.64, 1] as const,
-      }
-    }
-  };
+  }, [wordsToShow.length]);
 
   const isAmelia = currentPhrase?.role === "amelia";
 
@@ -142,7 +129,7 @@ const ConversationPanel = ({
         </div>
       </div>
 
-      {/* Messages - Kinetic captions */}
+      {/* Messages - Word-by-word kinetic reveal */}
       <div
         ref={scrollRef}
         className={cn(
@@ -196,7 +183,7 @@ const ConversationPanel = ({
               />
             </AnimatePresence>
 
-            {/* Active message with kinetic phrases */}
+            {/* Active message with word-by-word reveal */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentPhrase?.messageId}
@@ -208,7 +195,7 @@ const ConversationPanel = ({
                 {/* Speaker Label */}
                 <motion.div 
                   className={cn(
-                    "flex items-center gap-1.5 mb-2",
+                    "flex items-center gap-1.5 mb-3",
                     isAmelia ? "justify-end" : "justify-start"
                   )}
                   initial={{ opacity: 0 }}
@@ -241,56 +228,63 @@ const ConversationPanel = ({
                   </motion.span>
                 </motion.div>
 
-                {/* Kinetic Phrase Display - only show last 2-3 phrases */}
-                <div className={cn(
-                  "space-y-1",
-                  isAmelia ? "text-right" : "text-left"
+                {/* Word-by-word reveal synced to audio */}
+                <p className={cn(
+                  "leading-relaxed font-medium",
+                  isFullscreen ? "text-xl" : "text-lg",
+                  isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
                 )}>
-                  {currentPhrase?.visiblePhrases.slice(-3).map((phrase, idx) => {
-                    const actualIdx = (currentPhrase?.visiblePhrases.length ?? 0) - 3 + idx;
-                    const isLatest = actualIdx === currentPhrase?.latestPhraseIndex;
-                    const isOlder = actualIdx < (currentPhrase?.latestPhraseIndex ?? 0);
+                  {wordsToShow.map((word, idx) => {
+                    const isLatest = idx === latestWordIndex;
+                    const isRecent = idx >= latestWordIndex - 2;
                     
                     return (
-                      <motion.p
-                        key={`${currentPhrase?.messageId}-${actualIdx}`}
+                      <motion.span
+                        key={`${currentPhrase?.messageId}-word-${idx}`}
                         className={cn(
-                          "leading-relaxed font-medium",
-                          isFullscreen ? "text-xl" : "text-lg",
-                          isAmelia ? "text-foreground" : "text-foreground/90",
-                          isOlder && "opacity-50"
+                          "inline-block mr-[0.25em]",
+                          !isRecent && "opacity-60"
                         )}
-                        variants={isLatest ? latestPhraseVariants : phraseVariants}
-                        initial="initial"
-                        animate="animate"
+                        initial={{ 
+                          opacity: 0, 
+                          y: 6,
+                          scale: 0.94
+                        }}
+                        animate={{ 
+                          opacity: isRecent ? 1 : 0.6, 
+                          y: 0,
+                          scale: 1
+                        }}
+                        transition={{ 
+                          duration: 0.18,
+                          ease: [0.25, 0.1, 0.25, 1]
+                        }}
                       >
                         {isLatest ? (
-                          // Latest phrase with subtle highlight
-                          <motion.span
-                            className="relative inline"
-                            initial={{ opacity: 0.7 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            {phrase}
-                            {/* Subtle glow on latest phrase */}
+                          <span className="relative">
+                            <span className={cn(
+                              isAmelia ? "text-enera-brand" : "text-foreground"
+                            )}>
+                              {word}
+                            </span>
+                            {/* Glow on latest word */}
                             <motion.span
                               className={cn(
-                                "absolute -inset-1 -z-10 blur-md rounded-lg",
-                                isAmelia ? "bg-enera-brand/15" : "bg-foreground/5"
+                                "absolute -inset-1 -z-10 blur-sm rounded",
+                                isAmelia ? "bg-enera-brand/20" : "bg-foreground/8"
                               )}
-                              initial={{ opacity: 0.5, scale: 1.05 }}
+                              initial={{ opacity: 0.7, scale: 1.1 }}
                               animate={{ opacity: 0, scale: 1 }}
-                              transition={{ duration: 0.6 }}
+                              transition={{ duration: 0.35 }}
                             />
-                          </motion.span>
+                          </span>
                         ) : (
-                          phrase
+                          word
                         )}
-                      </motion.p>
+                      </motion.span>
                     );
                   })}
-                </div>
+                </p>
               </motion.div>
             </AnimatePresence>
           </div>

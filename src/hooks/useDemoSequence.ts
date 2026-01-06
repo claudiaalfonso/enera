@@ -224,6 +224,9 @@ export interface CurrentPhraseState {
   role: "driver" | "amelia" | null;
   visiblePhrases: string[]; // Phrases currently visible
   latestPhraseIndex: number; // Index of the most recent phrase (for highlighting)
+  wordProgress: number; // 0-1 progress within current phrase for word reveal
+  currentPhraseStartTime: number; // Start time of current phrase
+  nextPhraseStartTime: number | null; // Start time of next phrase (for interpolation)
 }
 
 export const useDemoSequence = (initialMode: PlayMode = "auto") => {
@@ -243,7 +246,10 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     messageId: null,
     role: null,
     visiblePhrases: [],
-    latestPhraseIndex: -1
+    latestPhraseIndex: -1,
+    wordProgress: 0,
+    currentPhraseStartTime: 0,
+    nextPhraseStartTime: null
   });
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -292,7 +298,10 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
           messageId: null,
           role: null,
           visiblePhrases: [],
-          latestPhraseIndex: -1
+          latestPhraseIndex: -1,
+          wordProgress: 0,
+          currentPhraseStartTime: 0,
+          nextPhraseStartTime: null
         });
         setCurrentStatus("");
         setMessages([]);
@@ -330,13 +339,36 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
         }
       }
       
-      // Update phrase state
+      // Update phrase state with word progress
       if (activeMessage) {
+        // Calculate word progress within current phrase
+        const currentPhraseObj = activeMessage.phrases[latestPhraseIndex];
+        const nextPhraseObj = activeMessage.phrases[latestPhraseIndex + 1];
+        const currentPhraseStart = currentPhraseObj?.startTime ?? 0;
+        const nextPhraseStart = nextPhraseObj?.startTime ?? null;
+        
+        // Calculate progress through current phrase
+        let wordProgress = 1;
+        if (nextPhraseStart !== null) {
+          const phraseDuration = nextPhraseStart - currentPhraseStart;
+          const elapsed = currentTime - currentPhraseStart;
+          wordProgress = Math.min(1, Math.max(0, elapsed / phraseDuration));
+        } else {
+          // Last phrase - estimate based on word count (~0.15s per word)
+          const words = currentPhraseObj?.text.split(" ").length ?? 1;
+          const estimatedDuration = words * 0.15;
+          const elapsed = currentTime - currentPhraseStart;
+          wordProgress = Math.min(1, Math.max(0, elapsed / estimatedDuration));
+        }
+        
         setCurrentPhrase({
           messageId: activeMessage.id,
           role: activeMessage.role,
           visiblePhrases,
-          latestPhraseIndex
+          latestPhraseIndex,
+          wordProgress,
+          currentPhraseStartTime: currentPhraseStart,
+          nextPhraseStartTime: nextPhraseStart
         });
         
         // Build completed messages (all messages before current)
@@ -494,7 +526,10 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
       messageId: null,
       role: null,
       visiblePhrases: [],
-      latestPhraseIndex: -1
+      latestPhraseIndex: -1,
+      wordProgress: 0,
+      currentPhraseStartTime: 0,
+      nextPhraseStartTime: null
     });
     lastMessageIdRef.current = null;
   }, []);
