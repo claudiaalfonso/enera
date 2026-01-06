@@ -32,8 +32,8 @@ const CUE_SHEET: Cue[] = [
     chunks: [
       { t: 5.68, text: "Hello," },
       { t: 7.50, text: "my name is Amelia," },
-      { t: 8.7, text: "and I'm with Enera Support." },
-      { t: 9.8, text: "How can I help you today?" }
+      { t: 8.1, text: "and I'm with Enera Support." },
+      { t: 8.9, text: "How can I help you today?" }
     ]
   },
   { 
