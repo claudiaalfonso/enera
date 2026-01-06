@@ -130,13 +130,13 @@ const PresentationControls = ({
           </Button>
 
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onToggleCompact}
-            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            className="h-9 w-9 p-0 border-border/60 bg-muted/30 text-foreground hover:bg-muted/50"
             title="Hide controls (C)"
           >
-            {isCompact ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            {isCompact ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
           </Button>
         </div>
       </div>
