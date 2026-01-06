@@ -3,13 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./ChatMessage";
+import AudioVisualizer from "./AudioVisualizer";
 
 interface ConversationPanelProps {
   messages: Message[];
   isFullscreen?: boolean;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
+  isPlaying?: boolean;
 }
 
-const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanelProps) => {
+const ConversationPanel = ({ 
+  messages, 
+  isFullscreen = false,
+  audioRef,
+  isPlaying = false
+}: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Get only the last 2 messages (current speaker context)
@@ -27,27 +35,38 @@ const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanel
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header - Minimal */}
+      {/* Header - Minimal with visualizer */}
       <div className={cn(
         "flex-shrink-0 border-b border-border/30 bg-enera-surface-elevated/30 transition-all",
         isFullscreen ? "px-8 py-3" : "px-6 py-2.5"
       )}>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Phone className={cn(
-              "text-enera-brand transition-all",
-              isFullscreen ? "w-4 h-4" : "w-3.5 h-3.5"
-            )} />
-            {messages.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-success rounded-full animate-pulse" />
-            )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Phone className={cn(
+                "text-enera-brand transition-all",
+                isFullscreen ? "w-4 h-4" : "w-3.5 h-3.5"
+              )} />
+              {messages.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-success rounded-full animate-pulse" />
+              )}
+            </div>
+            <span className={cn(
+              "font-medium text-foreground/80 transition-all",
+              isFullscreen ? "text-sm" : "text-xs"
+            )}>
+              Live Call
+            </span>
           </div>
-          <span className={cn(
-            "font-medium text-foreground/80 transition-all",
-            isFullscreen ? "text-sm" : "text-xs"
-          )}>
-            Live Call
-          </span>
+
+          {/* Audio Visualizer */}
+          {audioRef && (
+            <AudioVisualizer 
+              audioRef={audioRef} 
+              isPlaying={isPlaying} 
+              isFullscreen={isFullscreen} 
+            />
+          )}
         </div>
       </div>
 
@@ -81,7 +100,7 @@ const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanel
         ) : (
           <div className="w-full max-w-md space-y-4">
             <AnimatePresence mode="popLayout">
-              {visibleMessages.map((msg, idx) => {
+              {visibleMessages.map((msg) => {
                 const isAmelia = msg.role === "amelia";
                 const isCurrent = msg.id === currentMessage?.id;
                 
