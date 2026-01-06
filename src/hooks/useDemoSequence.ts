@@ -90,7 +90,7 @@ const CUE_SHEET: Cue[] = [
       { t: 47.0, text: "although the charger itself is healthy." },
       { t: 49.8, text: "I'm going to trigger a remote reset" },
       { t: 52.9, text: "on the reader for you now." },
-      { t: 54.76, text: "It should take about 45 seconds" },
+      { t: 54.26, text: "It should take about 45 seconds" },
       { t: 56.82, text: "to reboot and come back online." }
     ]
   },
