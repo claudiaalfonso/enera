@@ -246,7 +246,12 @@ const Index = () => {
             )}
             variants={rightPanelVariants}
           >
-            <ConversationPanel messages={messages} isFullscreen={isFullscreen} />
+            <ConversationPanel 
+              messages={messages} 
+              isFullscreen={isFullscreen} 
+              audioRef={audioRef}
+              isPlaying={isPlaying}
+            />
           </motion.div>
         </main>
 
