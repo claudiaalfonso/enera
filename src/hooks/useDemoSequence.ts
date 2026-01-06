@@ -38,17 +38,17 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "2", 
     speaker: "driver", 
-    startTime: 13.0, 
+    startTime: 11.5, 
     endTime: 27.0, 
     chunks: [
-      { t: 13.0, text: "Hi, I'm trying to use" },
-      { t: 14.2, text: "the charger at the Church Street car park" },
-      { t: 16.0, text: "in Market Harborough," },
-      { t: 17.2, text: "but I'm not having much luck." },
-      { t: 19.0, text: "I've tried tapping my contactless card" },
-      { t: 21.0, text: "a few times now," },
-      { t: 22.2, text: "and it looks like the screen" },
-      { t: 24.0, text: "isn't changing at all." }
+      { t: 11.5, text: "Hi, I'm trying to use" },
+      { t: 12.7, text: "the charger at the Church Street car park" },
+      { t: 14.5, text: "in Market Harborough," },
+      { t: 15.7, text: "but I'm not having much luck." },
+      { t: 17.5, text: "I've tried tapping my contactless card" },
+      { t: 19.5, text: "a few times now," },
+      { t: 20.7, text: "and it looks like the screen" },
+      { t: 22.5, text: "isn't changing at all." }
     ]
   },
   { 
