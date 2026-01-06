@@ -332,7 +332,7 @@ const Index = () => {
           currentPhrase={currentPhrase.messageId ? {
             id: currentPhrase.messageId,
             speaker: currentPhrase.role as "amelia" | "customer",
-            text: currentPhrase.visiblePhrases[currentPhrase.visiblePhrases.length - 1] || "",
+            text: currentPhrase.currentPhraseText || "",
             startTime: currentPhrase.currentPhraseStartTime,
             duration: currentPhrase.nextPhraseStartTime 
               ? currentPhrase.nextPhraseStartTime - currentPhrase.currentPhraseStartTime 

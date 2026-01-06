@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./ChatMessage";
@@ -22,46 +22,43 @@ const ConversationPanel = ({
   currentPhrase
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [prevSpeaker, setPrevSpeaker] = useState<string | null>(null);
-  const [speakerChangeKey, setSpeakerChangeKey] = useState(0);
 
-  const currentSpeaker = currentPhrase?.role;
-  const hasContent = currentPhrase && currentPhrase.visiblePhrases.length > 0;
+  // Check if we have content to show (state is active or we have text)
+  const hasContent = currentPhrase && currentPhrase.state !== "hidden" && 
+    (currentPhrase.accumulatedText || currentPhrase.currentPhraseText);
   
-  // Track speaker changes for transition effects
-  useEffect(() => {
-    if (currentSpeaker && currentSpeaker !== prevSpeaker) {
-      setPrevSpeaker(currentSpeaker);
-      setSpeakerChangeKey(k => k + 1);
-    }
-  }, [currentSpeaker, prevSpeaker]);
-
-  // Calculate words to show based on audio-synced progress
-  const { wordsToShow, latestWordIndex } = useMemo(() => {
-    if (!currentPhrase?.visiblePhrases || currentPhrase.visiblePhrases.length === 0) {
-      return { wordsToShow: [], latestWordIndex: -1 };
+  // Calculate words to show - FORWARD ONLY, never shrinks
+  const { accumulatedWords, revealedCurrentWords, latestWordIndex } = useMemo(() => {
+    if (!currentPhrase || currentPhrase.state === "hidden") {
+      return { accumulatedWords: [], revealedCurrentWords: [], latestWordIndex: -1 };
     }
     
-    // Get all completed phrases (full words)
-    const completedPhrases = currentPhrase.visiblePhrases.slice(0, -1);
-    const completedWords = completedPhrases.flatMap(p => p.split(" "));
+    // Split accumulated (completed) text into words
+    const accumulatedWords = currentPhrase.accumulatedText
+      ? currentPhrase.accumulatedText.split(" ").filter(w => w.length > 0)
+      : [];
     
-    // Get current phrase and calculate partial word reveal
-    const currentPhraseText = currentPhrase.visiblePhrases[currentPhrase.visiblePhrases.length - 1];
-    const currentPhraseWords = currentPhraseText.split(" ");
+    // Split current phrase into words and reveal based on progress
+    const currentPhraseWords = currentPhrase.currentPhraseText
+      ? currentPhrase.currentPhraseText.split(" ").filter(w => w.length > 0)
+      : [];
     
-    // Use wordProgress to determine how many words of current phrase to show
-    const progress = currentPhrase.wordProgress ?? 1;
-    const wordsInCurrentPhrase = Math.ceil(progress * currentPhraseWords.length);
-    const revealedCurrentWords = currentPhraseWords.slice(0, wordsInCurrentPhrase);
+    // Use wordProgress to determine how many words to reveal (forward only)
+    const progress = currentPhrase.wordProgress ?? 0;
+    const wordsToReveal = Math.ceil(progress * currentPhraseWords.length);
+    const revealedCurrentWords = currentPhraseWords.slice(0, Math.max(1, wordsToReveal));
     
-    const allWords = [...completedWords, ...revealedCurrentWords];
+    const totalWords = accumulatedWords.length + revealedCurrentWords.length;
     
     return { 
-      wordsToShow: allWords, 
-      latestWordIndex: allWords.length - 1 
+      accumulatedWords, 
+      revealedCurrentWords,
+      latestWordIndex: totalWords - 1 
     };
-  }, [currentPhrase?.visiblePhrases, currentPhrase?.wordProgress]);
+  }, [currentPhrase?.accumulatedText, currentPhrase?.currentPhraseText, currentPhrase?.wordProgress, currentPhrase?.state]);
+
+  // All words combined for rendering
+  const allWords = [...accumulatedWords, ...revealedCurrentWords];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -70,7 +67,7 @@ const ConversationPanel = ({
         behavior: "smooth",
       });
     }
-  }, [wordsToShow.length]);
+  }, [allWords.length]);
 
   const isAmelia = currentPhrase?.role === "amelia";
 
@@ -163,9 +160,10 @@ const ConversationPanel = ({
                 isFullscreen ? "text-xl" : "text-lg",
                 isAmelia ? "text-right text-foreground" : "text-left text-foreground/90"
               )}>
-                {wordsToShow.map((word, idx) => {
+                {allWords.map((word, idx) => {
                   const isLatest = idx === latestWordIndex;
                   const isRecent = idx >= latestWordIndex - 2;
+                  const isAccumulated = idx < accumulatedWords.length;
 
                   return (
                     <motion.span
@@ -174,7 +172,7 @@ const ConversationPanel = ({
                         "inline-block mr-[0.25em]",
                         !isRecent && "opacity-60"
                       )}
-                      initial={{ opacity: 0, y: 4 }}
+                      initial={isAccumulated ? false : { opacity: 0, y: 4 }}
                       animate={{ opacity: isRecent ? 1 : 0.6, y: 0 }}
                       transition={{ duration: 0.14, ease: "easeOut" }}
                     >

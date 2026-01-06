@@ -208,19 +208,20 @@ const createInitialSteps = (): TimelineStep[] => [
   { id: "9", label: "Session started", detail: "", status: "pending" }
 ];
 
+// Human-readable system states - calm, explanatory, not technical
 const STATUS_MESSAGES = [
   "", // Empty - nothing during silence
-  "Call connected",
-  "Issue received",
-  "Locating charger",
-  "MH-102-B confirmed",
-  "Running diagnostics",
-  "Reader frozen",
-  "Resetting reader",
-  "Upsell offered",
-  "Charger available",
-  "Session active",
-  "Call complete"
+  "Listening to driver",
+  "Understanding the issue",
+  "Locating charger station",
+  "Charger MH-102-B identified",
+  "Running remote diagnostics",
+  "Card reader unresponsive",
+  "Resetting payment module",
+  "Discount offer presented",
+  "Charger available again",
+  "Charging session confirmed",
+  "Issue resolved"
 ];
 
 // Timeline step triggers - when each step activates (AFTER speech, synced to new timestamps)
@@ -251,15 +252,19 @@ const STATUS_TRIGGERS: { statusIndex: number; time: number }[] = [
   { statusIndex: 11, time: 126 },  // Call complete
 ];
 
-// Current phrase display state
+// Current phrase display state - strict lifecycle: Hidden → Active → Completed
 export interface CurrentPhraseState {
   messageId: string | null;
   role: "driver" | "amelia" | null;
-  visiblePhrases: string[]; // Phrases currently visible
-  latestPhraseIndex: number; // Index of the most recent phrase (for highlighting)
+  // Full accumulated text - NEVER shrinks, only grows forward
+  accumulatedText: string;
+  // Current phrase being revealed
+  currentPhraseText: string;
   wordProgress: number; // 0-1 progress within current phrase for word reveal
-  currentPhraseStartTime: number; // Start time of current phrase
-  nextPhraseStartTime: number | null; // Start time of next phrase (for interpolation)
+  currentPhraseStartTime: number;
+  nextPhraseStartTime: number | null;
+  // Lifecycle state
+  state: "hidden" | "active" | "completed";
 }
 
 export const useDemoSequence = () => {
@@ -277,11 +282,12 @@ export const useDemoSequence = () => {
   const [currentPhrase, setCurrentPhrase] = useState<CurrentPhraseState>({
     messageId: null,
     role: null,
-    visiblePhrases: [],
-    latestPhraseIndex: -1,
+    accumulatedText: "",
+    currentPhraseText: "",
     wordProgress: 0,
     currentPhraseStartTime: 0,
-    nextPhraseStartTime: null
+    nextPhraseStartTime: null,
+    state: "hidden"
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -333,11 +339,12 @@ export const useDemoSequence = () => {
         setCurrentPhrase({
           messageId: null,
           role: null,
-          visiblePhrases: [],
-          latestPhraseIndex: -1,
+          accumulatedText: "",
+          currentPhraseText: "",
           wordProgress: 0,
           currentPhraseStartTime: 0,
-          nextPhraseStartTime: null
+          nextPhraseStartTime: null,
+          state: "hidden"
         });
         setCurrentStatus("");
         setIsProcessing(false);
@@ -376,11 +383,12 @@ export const useDemoSequence = () => {
         setCurrentPhrase({
           messageId: null,
           role: null,
-          visiblePhrases: [],
-          latestPhraseIndex: -1,
+          accumulatedText: "",
+          currentPhraseText: "",
           wordProgress: 0,
           currentPhraseStartTime: 0,
-          nextPhraseStartTime: null
+          nextPhraseStartTime: null,
+          state: "hidden"
         });
         setCurrentStatus("");
         setIsProcessing(false);
@@ -389,34 +397,41 @@ export const useDemoSequence = () => {
         return;
       }
 
-      // Build phrase window (max 2 phrases) for current message
+      // Build ACCUMULATED text for this message - NEVER shrinks, only grows
       const activeMessage = TIMED_TRANSCRIPT.find(m => m.id === activePhrase!.messageId) ?? null;
       const latestPhraseIndex = activePhrase.phraseIndex;
 
-      const visiblePhrases = activeMessage
-        ? activeMessage.phrases
-            .slice(Math.max(0, latestPhraseIndex - 1), latestPhraseIndex + 1)
-            .map(p => p.text)
-        : [activePhrase.text];
-
+      // All completed phrases so far (full text)
+      const completedPhraseTexts = activeMessage
+        ? activeMessage.phrases.slice(0, latestPhraseIndex).map(p => p.text)
+        : [];
+      
+      // Current phrase being revealed
+      const currentPhraseText = activePhrase.text;
+      
+      // Calculate word progress within current phrase
       const estimatedDuration = estimateSpeechDuration(activePhrase.text, activePhrase.role);
       const elapsed = currentTime - activePhrase.startTime;
       const wordProgress = Math.min(1, Math.max(0, elapsed / estimatedDuration));
+      
+      // Accumulated text = all completed phrases joined
+      const accumulatedText = completedPhraseTexts.join(" ");
 
       const newPhraseState: CurrentPhraseState = {
         messageId: activePhrase.messageId,
         role: activePhrase.role,
-        visiblePhrases,
-        latestPhraseIndex,
+        accumulatedText,
+        currentPhraseText,
         wordProgress,
         currentPhraseStartTime: activePhrase.startTime,
-        nextPhraseStartTime: activePhrase.nextStartTime
+        nextPhraseStartTime: activePhrase.nextStartTime,
+        state: "active"
       };
       
       setCurrentPhrase(newPhraseState);
       
       // Track for smooth persistence
-      const estimatedEnd = activePhrase.startTime + estimateSpeechDuration(activePhrase.text, activePhrase.role);
+      const estimatedEnd = activePhrase.startTime + estimatedDuration;
       lastPhraseEndTimeRef.current = estimatedEnd;
       lastPhraseStateRef.current = newPhraseState;
 
@@ -567,11 +582,12 @@ export const useDemoSequence = () => {
     setCurrentPhrase({
       messageId: null,
       role: null,
-      visiblePhrases: [],
-      latestPhraseIndex: -1,
+      accumulatedText: "",
+      currentPhraseText: "",
       wordProgress: 0,
       currentPhraseStartTime: 0,
-      nextPhraseStartTime: null
+      nextPhraseStartTime: null,
+      state: "hidden"
     });
     lastMessageIdRef.current = null;
   }, []);
