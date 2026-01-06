@@ -15,7 +15,8 @@ interface ConversationPanelProps {
 }
 
 // Estimate lines based on character count and container width
-const estimateLines = (text: string, charsPerLine: number = 35): number => {
+// More conservative estimate for larger text
+const estimateLines = (text: string, charsPerLine: number = 40): number => {
   if (!text) return 0;
   return Math.ceil(text.length / charsPerLine);
 };
@@ -28,16 +29,23 @@ const ConversationPanel = ({
   currentPhrase
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [displayKey, setDisplayKey] = useState(0);
-
-  // Track when to do a clean reset
-  const prevMessageIdRef = useRef<string | null>(null);
+  
+  // Track accumulated display text separately from phrase data
+  // This allows us to control when resets happen based on 4-line rule
+  const [displayState, setDisplayState] = useState<{
+    key: number;
+    accumulatedText: string;
+    role: "driver" | "amelia" | null;
+  }>({ key: 0, accumulatedText: "", role: null });
+  
+  const prevRoleRef = useRef<string | null>(null);
+  const lastFullTextRef = useRef<string>("");
 
   // Check if we have content to show
   const hasContent = currentPhrase && currentPhrase.state !== "hidden" && 
     (currentPhrase.accumulatedText || currentPhrase.currentPhraseText);
   
-  // Calculate words to show - FORWARD ONLY, never shrinks
+  // Calculate the full text that would be shown
   const { allWords, latestWordIndex, totalText } = useMemo(() => {
     if (!currentPhrase || currentPhrase.state === "hidden") {
       return { allWords: [], latestWordIndex: -1, totalText: "" };
@@ -65,7 +73,6 @@ const ConversationPanel = ({
       : [];
     
     // Use wordProgress to determine how many words to reveal
-    // Always show at least 1 word once active, and accelerate reveal
     const progress = currentPhrase.wordProgress ?? 0;
     const wordsToReveal = Math.ceil(progress * currentPhraseWords.length);
     const revealedCurrentWords = currentPhraseWords.slice(0, Math.max(1, wordsToReveal));
@@ -80,20 +87,48 @@ const ConversationPanel = ({
     };
   }, [currentPhrase?.accumulatedText, currentPhrase?.currentPhraseText, currentPhrase?.wordProgress, currentPhrase?.state]);
 
-  // 4-line max rule: Clean reset when switching messages if content would exceed
+  // 4-line rule: Gentle reset when NEXT content would exceed 4 lines
+  // Reset happens BETWEEN thoughts (on speaker change or when lines would exceed)
   useEffect(() => {
-    if (!currentPhrase?.messageId) return;
-    
-    if (prevMessageIdRef.current !== currentPhrase.messageId) {
-      // New message starting - check if we need a clean reset
-      const currentLines = estimateLines(totalText);
-      if (currentLines > 4 || prevMessageIdRef.current !== null) {
-        // Trigger clean reset with new key
-        setDisplayKey(k => k + 1);
+    if (!currentPhrase || currentPhrase.state === "hidden") {
+      // Clear display on silence
+      if (displayState.accumulatedText !== "") {
+        setDisplayState({ key: displayState.key, accumulatedText: "", role: null });
       }
-      prevMessageIdRef.current = currentPhrase.messageId;
+      prevRoleRef.current = null;
+      lastFullTextRef.current = "";
+      return;
     }
-  }, [currentPhrase?.messageId, totalText]);
+
+    const currentRole = currentPhrase.role;
+    const currentLines = estimateLines(totalText);
+    
+    // Check if we need a reset:
+    // 1. Speaker changed (natural paragraph break)
+    // 2. Text would exceed 4 lines
+    const speakerChanged = prevRoleRef.current !== null && prevRoleRef.current !== currentRole;
+    const wouldExceedLines = currentLines > 4;
+    
+    if (speakerChanged || wouldExceedLines) {
+      // Trigger gentle fade reset
+      setDisplayState(prev => ({
+        key: prev.key + 1,
+        accumulatedText: "",
+        role: currentRole
+      }));
+      prevRoleRef.current = currentRole;
+      lastFullTextRef.current = "";
+    } else {
+      // Continue accumulating
+      prevRoleRef.current = currentRole;
+      lastFullTextRef.current = totalText;
+      
+      // Update role if needed
+      if (displayState.role !== currentRole) {
+        setDisplayState(prev => ({ ...prev, role: currentRole }));
+      }
+    }
+  }, [currentPhrase?.role, currentPhrase?.state, totalText]);
 
   const isAmelia = currentPhrase?.role === "amelia";
   const isCompleted = currentPhrase?.state === "completed";
@@ -147,12 +182,12 @@ const ConversationPanel = ({
         <AnimatePresence mode="wait">
           {!hasContent ? null : (
             <motion.div 
-              key={`${currentPhrase?.messageId}-${displayKey}`}
+              key={displayState.key}
               className="w-full max-w-lg"
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -4, transition: { duration: 0.3, ease: "easeOut" } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {/* Speaker Label */}
               <motion.div
@@ -228,4 +263,3 @@ const ConversationPanel = ({
 };
 
 export default ConversationPanel;
-
