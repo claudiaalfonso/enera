@@ -29,16 +29,26 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={cn("rounded-full bg-success flex items-center justify-center", iconSize)}
+            className={cn(
+              "rounded-full bg-success flex items-center justify-center shadow-sm",
+              iconSize
+            )}
           >
             <Check className={cn("text-success-foreground", checkSize)} strokeWidth={3} />
           </motion.div>
         );
       case "active":
         return (
-          <div className={cn("rounded-full bg-accent flex items-center justify-center", iconSize)}>
-            <Loader2 className={cn("text-accent-foreground animate-spin", checkSize)} />
-          </div>
+          <motion.div 
+            className={cn(
+              "rounded-full bg-enera-brand flex items-center justify-center action-glow",
+              iconSize
+            )}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+          >
+            <Loader2 className={cn("text-white animate-spin", checkSize)} />
+          </motion.div>
         );
       default:
         return (
@@ -59,7 +69,7 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
       {/* Timeline Line */}
       {!isLast && (
         <div className={cn(
-          "absolute top-8 bottom-0 w-[2px] bg-border",
+          "absolute top-8 bottom-0 w-[2px] bg-border/60",
           isFullscreen ? "left-[13px]" : "left-[11px]"
         )} />
       )}
@@ -68,7 +78,7 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
       {!isLast && step.status === "completed" && (
         <motion.div
           className={cn(
-            "absolute top-8 w-[2px] bg-success/40",
+            "absolute top-8 w-[2px] bg-success/50",
             isFullscreen ? "left-[13px]" : "left-[11px]"
           )}
           initial={{ height: 0 }}
@@ -83,7 +93,7 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
       </div>
 
       {/* Content */}
-      <div className={cn("flex-1 min-w-0", isFullscreen ? "pb-7" : "pb-6")}>
+      <div className={cn("flex-1 min-w-0", isFullscreen ? "pb-7" : "pb-5")}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <p
@@ -91,15 +101,18 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
                 "font-medium transition-all",
                 isFullscreen ? "text-base" : "text-sm",
                 step.status === "completed" ? "text-foreground" : 
-                step.status === "active" ? "text-foreground" : 
+                step.status === "active" ? "text-enera-brand font-semibold" : 
                 "text-muted-foreground"
               )}
             >
               {step.label}
             </p>
             <p className={cn(
-              "text-muted-foreground mt-0.5 leading-relaxed transition-all",
-              isFullscreen ? "text-sm" : "text-xs"
+              "mt-0.5 leading-relaxed transition-all",
+              isFullscreen ? "text-sm" : "text-xs",
+              step.status === "completed" ? "text-muted-foreground" :
+              step.status === "active" ? "text-foreground/70" :
+              "text-muted-foreground/70"
             )}>
               {step.detail}
             </p>
@@ -111,11 +124,11 @@ const TimelineItem = ({ step, index, isLast, isFullscreen = false }: TimelineIte
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className={cn(
-                "flex-shrink-0 font-medium rounded-full bg-accent/10 text-accent border border-accent/20 transition-all",
+                "flex-shrink-0 font-medium rounded-full bg-success/10 text-success border border-success/20 transition-all",
                 isFullscreen ? "text-xs px-3 py-1" : "text-[10px] px-2 py-0.5"
               )}
             >
-              Value+
+              Revenue+
             </motion.span>
           )}
         </div>

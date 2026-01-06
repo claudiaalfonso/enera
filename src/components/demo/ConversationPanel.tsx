@@ -25,12 +25,12 @@ const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanel
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className={cn(
-        "flex-shrink-0 border-b border-border bg-enera-surface-elevated transition-all",
-        isFullscreen ? "px-8 py-5" : "px-6 py-4"
+        "flex-shrink-0 border-b border-border/50 bg-enera-surface-elevated/50 transition-all",
+        isFullscreen ? "px-8 py-4" : "px-6 py-3"
       )}>
         <div className="flex items-center gap-2">
           <MessageSquare className={cn(
-            "text-accent transition-all",
+            "text-enera-brand transition-all",
             isFullscreen ? "w-5 h-5" : "w-4 h-4"
           )} />
           <h2 className={cn(
@@ -47,7 +47,7 @@ const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanel
         ref={scrollRef}
         className={cn(
           "flex-1 overflow-y-auto transition-all",
-          isFullscreen ? "px-8 py-6 space-y-5" : "px-6 py-5 space-y-4"
+          isFullscreen ? "px-8 py-5 space-y-5" : "px-6 py-4 space-y-4"
         )}
       >
         {messages.length === 0 ? (
@@ -57,11 +57,11 @@ const ConversationPanel = ({ messages, isFullscreen = false }: ConversationPanel
             animate={{ opacity: 1 }}
           >
             <div className={cn(
-              "rounded-2xl bg-muted flex items-center justify-center mb-3 transition-all",
+              "rounded-2xl bg-muted/50 flex items-center justify-center mb-3 transition-all",
               isFullscreen ? "w-16 h-16" : "w-12 h-12"
             )}>
               <MessageSquare className={cn(
-                "text-muted-foreground transition-all",
+                "text-muted-foreground/60 transition-all",
                 isFullscreen ? "w-8 h-8" : "w-6 h-6"
               )} />
             </div>

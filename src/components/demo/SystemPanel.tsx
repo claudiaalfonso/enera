@@ -19,12 +19,12 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className={cn(
-        "flex-shrink-0 border-b border-border bg-card transition-all",
-        isFullscreen ? "px-8 py-5" : "px-6 py-4"
+        "flex-shrink-0 border-b border-border/50 bg-card/50 transition-all",
+        isFullscreen ? "px-8 py-4" : "px-6 py-3"
       )}>
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-0.5">
           <Cpu className={cn(
-            "text-accent transition-all",
+            "text-enera-brand transition-all",
             isFullscreen ? "w-5 h-5" : "w-4 h-4"
           )} />
           <h2 className={cn(
@@ -45,7 +45,7 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
       {/* Content */}
       <div className={cn(
         "flex-1 overflow-y-auto transition-all",
-        isFullscreen ? "px-8 py-6" : "px-6 py-5"
+        isFullscreen ? "px-8 py-5" : "px-6 py-4"
       )}>
         <LiveStatusCard status={currentStatus} isProcessing={isProcessing} isFullscreen={isFullscreen} />
         
@@ -59,7 +59,7 @@ const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isF
 
         {/* Confirmation State */}
         {showConfirmation && (
-          <div className="mt-6">
+          <div className="mt-5">
             <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
           </div>
         )}

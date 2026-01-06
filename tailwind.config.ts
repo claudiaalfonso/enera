@@ -58,6 +58,8 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         enera: {
+          brand: "hsl(var(--enera-brand))",
+          "brand-light": "hsl(var(--enera-brand-light))",
           slate: "hsl(var(--enera-slate))",
           teal: "hsl(var(--enera-teal))",
           "teal-glow": "hsl(var(--enera-teal-glow))",
@@ -89,6 +91,7 @@ export default {
         'enera-lg': 'var(--shadow-lg)',
         'enera-card': 'var(--shadow-card)',
         'enera-elevated': 'var(--shadow-elevated)',
+        'enera-glow': 'var(--shadow-glow)',
       },
       keyframes: {
         "accordion-down": {

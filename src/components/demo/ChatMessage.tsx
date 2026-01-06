@@ -27,21 +27,21 @@ const ChatMessage = ({ message, index, isFullscreen = false }: ChatMessageProps)
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ 
         duration: 0.35, 
-        delay: index * 0.05,
+        delay: index * 0.03,
         ease: [0.25, 0.1, 0.25, 1]
       }}
     >
       {/* Label */}
       <span className={cn(
-        "font-medium uppercase tracking-wider px-1 transition-all",
+        "font-medium uppercase tracking-wider px-1 transition-all flex items-center gap-1.5",
         isFullscreen ? "text-xs" : "text-[10px]",
-        isAmelia ? "text-accent" : "text-muted-foreground"
+        isAmelia ? "text-enera-brand" : "text-muted-foreground"
       )}>
         {isAmelia ? (
-          <span className="flex items-center gap-1">
+          <>
             <Bot className={cn("transition-all", isFullscreen ? "w-4 h-4" : "w-3 h-3")} />
-            Amelia (AI)
-          </span>
+            Amelia
+          </>
         ) : (
           "Driver"
         )}
@@ -50,7 +50,7 @@ const ChatMessage = ({ message, index, isFullscreen = false }: ChatMessageProps)
       {/* Message Bubble */}
       <div
         className={cn(
-          "max-w-[90%] leading-relaxed transition-all",
+          "max-w-[92%] leading-relaxed transition-all",
           isFullscreen ? "text-base px-5 py-4" : "text-sm px-4 py-3",
           isAmelia ? "message-bubble-amelia" : "message-bubble-driver"
         )}

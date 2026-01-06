@@ -13,7 +13,7 @@ const ConfirmationState = ({ isVisible, isFullscreen = false }: ConfirmationStat
   return (
     <motion.div
       className={cn(
-        "enera-card-elevated text-center enera-glow transition-all",
+        "enera-card-elevated text-center success-glow transition-all",
         isFullscreen ? "p-8" : "p-6"
       )}
       initial={{ opacity: 0, scale: 0.95 }}
@@ -24,7 +24,7 @@ const ConfirmationState = ({ isVisible, isFullscreen = false }: ConfirmationStat
       <motion.div
         className={cn(
           "inline-flex items-center justify-center rounded-2xl bg-success/10 transition-all",
-          isFullscreen ? "w-20 h-20 mb-5" : "w-16 h-16 mb-4"
+          isFullscreen ? "w-20 h-20 mb-5" : "w-14 h-14 mb-4"
         )}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -32,7 +32,7 @@ const ConfirmationState = ({ isVisible, isFullscreen = false }: ConfirmationStat
       >
         <CheckCircle2 className={cn(
           "text-success transition-all",
-          isFullscreen ? "w-10 h-10" : "w-8 h-8"
+          isFullscreen ? "w-10 h-10" : "w-7 h-7"
         )} />
       </motion.div>
 
@@ -63,8 +63,8 @@ const ConfirmationState = ({ isVisible, isFullscreen = false }: ConfirmationStat
       {/* Stats */}
       <motion.div
         className={cn(
-          "flex items-center justify-center gap-4 border-t border-border transition-all",
-          isFullscreen ? "mt-6 pt-6" : "mt-5 pt-5"
+          "flex items-center justify-center gap-4 border-t border-border/50 transition-all",
+          isFullscreen ? "mt-6 pt-6" : "mt-4 pt-4"
         )}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -75,18 +75,18 @@ const ConfirmationState = ({ isVisible, isFullscreen = false }: ConfirmationStat
           isFullscreen ? "text-base" : "text-sm"
         )}>
           <Zap className={cn(
-            "text-accent transition-all",
+            "text-enera-brand transition-all",
             isFullscreen ? "w-5 h-5" : "w-4 h-4"
           )} />
           <span className="text-muted-foreground">Active session</span>
         </div>
         <div className={cn(
-          "w-px bg-border transition-all",
+          "w-px bg-border/50 transition-all",
           isFullscreen ? "h-5" : "h-4"
         )} />
         <div className={cn("transition-all", isFullscreen ? "text-base" : "text-sm")}>
           <span className="font-medium text-success">35% saved</span>
-          <span className="text-muted-foreground ml-1">via app promo</span>
+          <span className="text-muted-foreground ml-1">via app</span>
         </div>
       </motion.div>
     </motion.div>

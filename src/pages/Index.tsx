@@ -83,7 +83,7 @@ const Index = () => {
 
   return (
     <div className={cn(
-      "h-screen flex flex-col overflow-hidden bg-background transition-all duration-300",
+      "h-screen flex flex-col overflow-hidden bg-background page-gradient transition-all duration-300",
       isFullscreen && "presentation-mode"
     )}>
       {/* SEO */}
@@ -93,11 +93,11 @@ const Index = () => {
       <DemoHeader isFullscreen={isFullscreen} />
 
       {/* Main Content */}
-      <main className="flex-1 flex min-h-0 pb-16">
+      <main className="flex-1 flex min-h-0 pb-14">
         {/* Left Panel - System View (60%) */}
         <motion.div
           className={cn(
-            "border-r border-border bg-card flex-shrink-0 transition-all duration-300",
+            "border-r border-border/50 bg-card/60 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
             isFullscreen ? "w-[55%]" : "w-[60%]"
           )}
           initial={{ opacity: 0, x: -20 }}
@@ -116,7 +116,7 @@ const Index = () => {
         {/* Right Panel - Conversation (40%) */}
         <motion.div
           className={cn(
-            "bg-enera-surface-elevated flex-shrink-0 transition-all duration-300",
+            "bg-enera-surface-elevated/80 backdrop-blur-sm flex-shrink-0 transition-all duration-300",
             isFullscreen ? "w-[45%]" : "w-[40%]"
           )}
           initial={{ opacity: 0, x: 20 }}

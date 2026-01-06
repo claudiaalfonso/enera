@@ -6,68 +6,74 @@
 
 @layer base {
   :root {
-    /* Enera Brand - Calm, Trustworthy, Intelligent */
-    --background: 220 20% 97%;
-    --foreground: 220 25% 12%;
+    /* Enera Brand - Extracted from logo: teal/sea green */
+    --enera-brand: 168 45% 38%;
+    --enera-brand-light: 168 35% 92%;
+    
+    /* Background with subtle warmth */
+    --background: 180 8% 97%;
+    --foreground: 200 20% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 200 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 200 20% 15%;
 
-    /* Primary - Deep Slate/Navy */
-    --primary: 220 30% 18%;
+    /* Primary - Enera brand teal */
+    --primary: 168 45% 38%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Soft Teal */
-    --secondary: 175 35% 94%;
-    --secondary-foreground: 175 45% 30%;
+    /* Secondary - Soft neutral */
+    --secondary: 180 10% 95%;
+    --secondary-foreground: 200 15% 25%;
 
     /* Muted - Warm Gray */
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 180 8% 93%;
+    --muted-foreground: 200 10% 45%;
 
-    /* Accent - Teal highlight */
-    --accent: 175 55% 45%;
+    /* Accent - Enera teal */
+    --accent: 168 45% 38%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 175 40% 92%;
+    --accent-soft: 168 30% 94%;
 
-    /* Success - Soft Green */
-    --success: 155 50% 45%;
+    /* Success - Soft Green (harmonized with brand) */
+    --success: 158 45% 42%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 155 45% 92%;
+    --success-soft: 158 35% 93%;
 
     /* Destructive */
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* System */
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 175 55% 45%;
+    --border: 200 15% 90%;
+    --input: 200 15% 90%;
+    --ring: 168 45% 38%;
 
     --radius: 0.75rem;
 
     /* Custom Enera tokens */
-    --enera-slate: 220 25% 22%;
-    --enera-teal: 175 55% 45%;
-    --enera-teal-glow: 175 60% 50%;
-    --enera-navy: 220 35% 15%;
+    --enera-slate: 200 20% 22%;
+    --enera-teal: 168 45% 38%;
+    --enera-teal-glow: 168 50% 45%;
+    --enera-navy: 200 30% 15%;
     --enera-surface: 0 0% 100%;
-    --enera-surface-elevated: 220 20% 98%;
+    --enera-surface-elevated: 180 10% 99%;
     
-    /* Gradients */
-    --gradient-subtle: linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(175 20% 96%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 15% 99%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(175 55% 45%) 0%, hsl(175 45% 55%) 100%);
+    /* Gradients - Lovable-style subtle */
+    --gradient-page: radial-gradient(ellipse 80% 50% at 50% -10%, hsl(168 30% 94% / 0.5) 0%, transparent 60%),
+                     radial-gradient(ellipse 60% 40% at 100% 100%, hsl(168 25% 95% / 0.4) 0%, transparent 50%);
+    --gradient-subtle: linear-gradient(135deg, hsl(180 8% 97%) 0%, hsl(168 15% 96%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(180 8% 99%) 100%);
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 25% 12% / 0.03);
-    --shadow-md: 0 4px 6px -1px hsl(220 25% 12% / 0.05), 0 2px 4px -2px hsl(220 25% 12% / 0.03);
-    --shadow-lg: 0 10px 15px -3px hsl(220 25% 12% / 0.06), 0 4px 6px -4px hsl(220 25% 12% / 0.04);
-    --shadow-card: 0 1px 3px 0 hsl(220 25% 12% / 0.04), 0 1px 2px -1px hsl(220 25% 12% / 0.04);
-    --shadow-elevated: 0 20px 25px -5px hsl(220 25% 12% / 0.08), 0 8px 10px -6px hsl(220 25% 12% / 0.06);
+    --shadow-sm: 0 1px 2px 0 hsl(200 20% 15% / 0.03);
+    --shadow-md: 0 4px 6px -1px hsl(200 20% 15% / 0.04), 0 2px 4px -2px hsl(200 20% 15% / 0.02);
+    --shadow-lg: 0 10px 15px -3px hsl(200 20% 15% / 0.05), 0 4px 6px -4px hsl(200 20% 15% / 0.03);
+    --shadow-card: 0 1px 3px 0 hsl(200 20% 15% / 0.03), 0 1px 2px -1px hsl(200 20% 15% / 0.03);
+    --shadow-elevated: 0 20px 25px -5px hsl(200 20% 15% / 0.06), 0 8px 10px -6px hsl(200 20% 15% / 0.04);
+    --shadow-glow: 0 0 20px hsl(168 50% 45% / 0.12);
 
     /* Sidebar - keeping defaults */
     --sidebar-background: 0 0% 98%;
@@ -81,45 +87,50 @@
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 220 10% 95%;
+    --enera-brand: 168 50% 50%;
+    --enera-brand-light: 168 40% 20%;
+    
+    --background: 200 20% 8%;
+    --foreground: 180 10% 95%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 220 10% 95%;
+    --card: 200 20% 11%;
+    --card-foreground: 180 10% 95%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 220 10% 95%;
+    --popover: 200 20% 11%;
+    --popover-foreground: 180 10% 95%;
 
-    --primary: 175 55% 50%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 168 50% 50%;
+    --primary-foreground: 200 20% 8%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 175 40% 70%;
+    --secondary: 200 15% 16%;
+    --secondary-foreground: 168 40% 75%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 200 15% 16%;
+    --muted-foreground: 200 10% 60%;
 
-    --accent: 175 55% 45%;
+    --accent: 168 50% 45%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 175 40% 15%;
+    --accent-soft: 168 40% 15%;
 
-    --success: 155 50% 45%;
+    --success: 158 45% 45%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 155 40% 15%;
+    --success-soft: 158 40% 15%;
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 175 55% 45%;
+    --border: 200 15% 18%;
+    --input: 200 15% 18%;
+    --ring: 168 50% 50%;
 
-    --enera-slate: 220 15% 75%;
-    --enera-teal: 175 55% 50%;
-    --enera-teal-glow: 175 60% 55%;
-    --enera-navy: 220 25% 10%;
-    --enera-surface: 220 25% 12%;
-    --enera-surface-elevated: 220 22% 15%;
+    --enera-slate: 180 10% 75%;
+    --enera-teal: 168 50% 50%;
+    --enera-teal-glow: 168 55% 55%;
+    --enera-navy: 200 20% 10%;
+    --enera-surface: 200 20% 11%;
+    --enera-surface-elevated: 200 18% 14%;
+    
+    --gradient-page: radial-gradient(ellipse 80% 50% at 50% -10%, hsl(168 40% 15% / 0.3) 0%, transparent 60%);
   }
 }
 
@@ -142,7 +153,7 @@
 
 @layer components {
   .enera-card {
-    @apply bg-card rounded-xl border border-border/50;
+    @apply bg-card rounded-xl border border-border/40;
     box-shadow: var(--shadow-card);
   }
 
@@ -152,7 +163,7 @@
   }
 
   .enera-glow {
-    box-shadow: 0 0 40px hsl(var(--enera-teal-glow) / 0.15);
+    box-shadow: var(--shadow-glow);
   }
 
   .enera-pulse {
@@ -166,6 +177,40 @@
     50% {
       opacity: 0.6;
     }
+  }
+
+  /* Action trigger glow animation */
+  @keyframes action-glow {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--enera-brand) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px 4px hsl(var(--enera-brand) / 0.15);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--enera-brand) / 0);
+    }
+  }
+
+  .action-glow {
+    animation: action-glow 1.5s ease-out;
+  }
+
+  /* Success confirmation glow */
+  @keyframes success-glow {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--success) / 0.25);
+    }
+    50% {
+      box-shadow: 0 0 30px 8px hsl(var(--success) / 0.12);
+    }
+    100% {
+      box-shadow: var(--shadow-elevated);
+    }
+  }
+
+  .success-glow {
+    animation: success-glow 2s ease-out forwards;
   }
 
   .enera-dot-pulse {
@@ -188,11 +233,17 @@
   }
 
   .message-bubble-driver {
-    @apply bg-muted/60 text-foreground rounded-2xl rounded-bl-md px-4 py-3;
+    @apply bg-muted/50 text-foreground rounded-2xl rounded-bl-md;
   }
 
   .message-bubble-amelia {
-    @apply bg-accent-soft text-foreground rounded-2xl rounded-br-md px-4 py-3 border border-accent/20;
+    @apply text-foreground rounded-2xl rounded-br-md border-l-2 border-l-enera-brand/40;
+    background: linear-gradient(135deg, hsl(var(--accent-soft)) 0%, hsl(var(--card)) 100%);
+  }
+
+  /* Page gradient background */
+  .page-gradient {
+    background: var(--gradient-page);
   }
 }
 

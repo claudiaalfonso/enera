@@ -12,8 +12,9 @@ const LiveStatusCard = ({ status, isProcessing, isFullscreen = false }: LiveStat
   return (
     <motion.div
       className={cn(
-        "enera-card mb-6 transition-all",
-        isFullscreen ? "p-5" : "p-4"
+        "enera-card mb-5 transition-all",
+        isFullscreen ? "p-5" : "p-4",
+        isProcessing && "action-glow"
       )}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -23,18 +24,18 @@ const LiveStatusCard = ({ status, isProcessing, isFullscreen = false }: LiveStat
         {/* AI Pulse Indicator */}
         <div className="relative">
           <div className={cn(
-            "rounded-xl bg-accent/10 flex items-center justify-center transition-all",
+            "rounded-xl bg-enera-brand/10 flex items-center justify-center transition-all",
             isFullscreen ? "w-12 h-12" : "w-10 h-10"
           )}>
             <Activity className={cn(
-              "text-accent transition-all",
+              "text-enera-brand transition-all",
               isFullscreen ? "w-6 h-6" : "w-5 h-5"
             )} />
           </div>
           {isProcessing && (
             <motion.div
-              className="absolute inset-0 rounded-xl bg-accent/20"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+              className="absolute inset-0 rounded-xl bg-enera-brand/15"
+              animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0, 0.4] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           )}
@@ -68,11 +69,11 @@ const LiveStatusCard = ({ status, isProcessing, isFullscreen = false }: LiveStat
         {/* Live Indicator */}
         {isProcessing && (
           <div className={cn(
-            "flex items-center gap-1.5 rounded-full bg-success/10 border border-success/20 transition-all",
+            "flex items-center gap-1.5 rounded-full bg-success/8 border border-success/15 transition-all",
             isFullscreen ? "px-3 py-1.5" : "px-2.5 py-1"
           )}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-60"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
             </span>
             <span className={cn(
