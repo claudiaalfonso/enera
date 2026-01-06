@@ -86,7 +86,7 @@ const CUE_SHEET: Cue[] = [
       { t: 39.9, text: "Thanks." },
       { t: 40.78, text: "Let me just look into what's happening there." },
       { t: 43.2, text: "I've just run a diagnostic," },
-      { t: 45.0, text: "and it looks like the card reader module" },
+      { t: 45.0, text: "and it looks like the card reader module is frozen," },
       { t: 47.0, text: "although the charger itself is healthy." },
       { t: 49.8, text: "I'm going to trigger a remote reset" },
       { t: 52.9, text: "on the reader for you now." },
