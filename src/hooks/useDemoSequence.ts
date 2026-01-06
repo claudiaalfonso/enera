@@ -250,11 +250,13 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
       }
       
       // Calculate reveal progress for current message
+      // Speed multiplier: 1.15 = words appear 15% faster than speech duration (feels more natural)
+      const REVEAL_SPEED = 1.15;
       if (currentIdx >= 0 && currentIdx < SEQUENCE.length) {
         const action = SEQUENCE[currentIdx];
         const elapsed = currentTime - action.audioTime;
         const duration = action.duration || 5;
-        const progress = Math.min(1, Math.max(0, elapsed / duration));
+        const progress = Math.min(1, Math.max(0, (elapsed * REVEAL_SPEED) / duration));
         setRevealProgress(progress);
       }
       
