@@ -1,15 +1,20 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LiveStatusCardProps {
   status: string;
   isProcessing: boolean;
+  isFullscreen?: boolean;
 }
 
-const LiveStatusCard = ({ status, isProcessing }: LiveStatusCardProps) => {
+const LiveStatusCard = ({ status, isProcessing, isFullscreen = false }: LiveStatusCardProps) => {
   return (
     <motion.div
-      className="enera-card p-4 mb-6"
+      className={cn(
+        "enera-card mb-6 transition-all",
+        isFullscreen ? "p-5" : "p-4"
+      )}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -17,8 +22,14 @@ const LiveStatusCard = ({ status, isProcessing }: LiveStatusCardProps) => {
       <div className="flex items-center gap-3">
         {/* AI Pulse Indicator */}
         <div className="relative">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Activity className="w-5 h-5 text-accent" />
+          <div className={cn(
+            "rounded-xl bg-accent/10 flex items-center justify-center transition-all",
+            isFullscreen ? "w-12 h-12" : "w-10 h-10"
+          )}>
+            <Activity className={cn(
+              "text-accent transition-all",
+              isFullscreen ? "w-6 h-6" : "w-5 h-5"
+            )} />
           </div>
           {isProcessing && (
             <motion.div
@@ -34,7 +45,10 @@ const LiveStatusCard = ({ status, isProcessing }: LiveStatusCardProps) => {
           <AnimatePresence mode="wait">
             <motion.p
               key={status}
-              className="text-sm font-medium text-foreground truncate"
+              className={cn(
+                "font-medium text-foreground truncate transition-all",
+                isFullscreen ? "text-base" : "text-sm"
+              )}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
@@ -43,19 +57,30 @@ const LiveStatusCard = ({ status, isProcessing }: LiveStatusCardProps) => {
               {status}
             </motion.p>
           </AnimatePresence>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className={cn(
+            "text-muted-foreground mt-0.5 transition-all",
+            isFullscreen ? "text-sm" : "text-xs"
+          )}>
             System status
           </p>
         </div>
 
         {/* Live Indicator */}
         {isProcessing && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 border border-success/20">
+          <div className={cn(
+            "flex items-center gap-1.5 rounded-full bg-success/10 border border-success/20 transition-all",
+            isFullscreen ? "px-3 py-1.5" : "px-2.5 py-1"
+          )}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
             </span>
-            <span className="text-xs font-medium text-success">Live</span>
+            <span className={cn(
+              "font-medium text-success transition-all",
+              isFullscreen ? "text-sm" : "text-xs"
+            )}>
+              Live
+            </span>
           </div>
         )}
       </div>

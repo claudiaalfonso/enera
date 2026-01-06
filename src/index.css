@@ -216,4 +216,18 @@
   .shadow-enera-lg {
     box-shadow: var(--shadow-lg);
   }
+
+  /* Presentation Mode - Enhanced for projectors */
+  .presentation-mode {
+    @apply bg-background;
+  }
+
+  .presentation-mode .enera-card {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .presentation-mode .message-bubble-driver,
+  .presentation-mode .message-bubble-amelia {
+    box-shadow: var(--shadow-md);
+  }
 }

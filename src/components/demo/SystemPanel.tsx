@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Cpu } from "lucide-react";
+import { cn } from "@/lib/utils";
 import LiveStatusCard from "./LiveStatusCard";
 import ActionTimeline from "./ActionTimeline";
 import ConfirmationState from "./ConfirmationState";
@@ -10,38 +11,56 @@ interface SystemPanelProps {
   isProcessing: boolean;
   steps: TimelineStep[];
   showConfirmation: boolean;
+  isFullscreen?: boolean;
 }
 
-const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation }: SystemPanelProps) => {
+const SystemPanel = ({ currentStatus, isProcessing, steps, showConfirmation, isFullscreen = false }: SystemPanelProps) => {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-border bg-card">
+      <div className={cn(
+        "flex-shrink-0 border-b border-border bg-card transition-all",
+        isFullscreen ? "px-8 py-5" : "px-6 py-4"
+      )}>
         <div className="flex items-center gap-2 mb-1">
-          <Cpu className="w-4 h-4 text-accent" />
-          <h2 className="text-sm font-semibold text-foreground">What's happening</h2>
+          <Cpu className={cn(
+            "text-accent transition-all",
+            isFullscreen ? "w-5 h-5" : "w-4 h-4"
+          )} />
+          <h2 className={cn(
+            "font-semibold text-foreground transition-all",
+            isFullscreen ? "text-lg" : "text-sm"
+          )}>
+            What's happening
+          </h2>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className={cn(
+          "text-muted-foreground transition-all",
+          isFullscreen ? "text-sm" : "text-xs"
+        )}>
           Live system actions powered by Amelia
         </p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        <LiveStatusCard status={currentStatus} isProcessing={isProcessing} />
+      <div className={cn(
+        "flex-1 overflow-y-auto transition-all",
+        isFullscreen ? "px-8 py-6" : "px-6 py-5"
+      )}>
+        <LiveStatusCard status={currentStatus} isProcessing={isProcessing} isFullscreen={isFullscreen} />
         
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <ActionTimeline steps={steps} />
+          <ActionTimeline steps={steps} isFullscreen={isFullscreen} />
         </motion.div>
 
         {/* Confirmation State */}
         {showConfirmation && (
           <div className="mt-6">
-            <ConfirmationState isVisible={showConfirmation} />
+            <ConfirmationState isVisible={showConfirmation} isFullscreen={isFullscreen} />
           </div>
         )}
       </div>

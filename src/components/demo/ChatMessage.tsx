@@ -11,9 +11,10 @@ export interface Message {
 interface ChatMessageProps {
   message: Message;
   index: number;
+  isFullscreen?: boolean;
 }
 
-const ChatMessage = ({ message, index }: ChatMessageProps) => {
+const ChatMessage = ({ message, index, isFullscreen = false }: ChatMessageProps) => {
   const isAmelia = message.role === "amelia";
 
   return (
@@ -32,12 +33,13 @@ const ChatMessage = ({ message, index }: ChatMessageProps) => {
     >
       {/* Label */}
       <span className={cn(
-        "text-[10px] font-medium uppercase tracking-wider px-1",
+        "font-medium uppercase tracking-wider px-1 transition-all",
+        isFullscreen ? "text-xs" : "text-[10px]",
         isAmelia ? "text-accent" : "text-muted-foreground"
       )}>
         {isAmelia ? (
           <span className="flex items-center gap-1">
-            <Bot className="w-3 h-3" />
+            <Bot className={cn("transition-all", isFullscreen ? "w-4 h-4" : "w-3 h-3")} />
             Amelia (AI)
           </span>
         ) : (
@@ -48,7 +50,8 @@ const ChatMessage = ({ message, index }: ChatMessageProps) => {
       {/* Message Bubble */}
       <div
         className={cn(
-          "max-w-[90%] text-sm leading-relaxed",
+          "max-w-[90%] leading-relaxed transition-all",
+          isFullscreen ? "text-base px-5 py-4" : "text-sm px-4 py-3",
           isAmelia ? "message-bubble-amelia" : "message-bubble-driver"
         )}
       >
