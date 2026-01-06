@@ -103,39 +103,39 @@ export interface SequenceAction {
   statusIndex: number;
   stepUpdates: { id: string; status: "active" | "completed" }[];
   audioTime: number;
+  // Duration for this message (calculated from next message start)
+  duration?: number;
 }
 
 // Timestamps matched EXACTLY to audio recording
 // IMPORTANT: First speech starts at ~3s (there's noise before that)
 const SEQUENCE: SequenceAction[] = [
   // 3s - Amelia intro (first actual speech, after initial noise)
-  { messageIndex: 0, statusIndex: 1, stepUpdates: [{ id: "1", status: "active" }], audioTime: 3 },
+  { messageIndex: 0, statusIndex: 1, stepUpdates: [{ id: "1", status: "active" }], audioTime: 3, duration: 8 },
   // 11s - Driver reports issue
-  { messageIndex: 1, statusIndex: 2, stepUpdates: [{ id: "1", status: "completed" }, { id: "2", status: "active" }], audioTime: 11 },
+  { messageIndex: 1, statusIndex: 2, stepUpdates: [{ id: "1", status: "completed" }, { id: "2", status: "active" }], audioTime: 11, duration: 14 },
   // 25s - Amelia asks for charger ID
-  { messageIndex: 2, statusIndex: 3, stepUpdates: [{ id: "2", status: "completed" }, { id: "3", status: "active" }], audioTime: 25 },
+  { messageIndex: 2, statusIndex: 3, stepUpdates: [{ id: "2", status: "completed" }, { id: "3", status: "active" }], audioTime: 25, duration: 9 },
   // 34s - Driver confirms ID
-  { messageIndex: 3, statusIndex: 4, stepUpdates: [{ id: "3", status: "completed" }, { id: "4", status: "active" }], audioTime: 34 },
+  { messageIndex: 3, statusIndex: 4, stepUpdates: [{ id: "3", status: "completed" }, { id: "4", status: "active" }], audioTime: 34, duration: 5 },
   // 39s - Amelia runs diagnostic, triggers reset
-  { messageIndex: 4, statusIndex: 5, stepUpdates: [{ id: "4", status: "completed" }, { id: "5", status: "active" }], audioTime: 39 },
-  // 50s - Diagnostic complete, reset triggered
-  { messageIndex: null, statusIndex: 7, stepUpdates: [{ id: "5", status: "completed" }, { id: "6", status: "active" }], audioTime: 50 },
+  { messageIndex: 4, statusIndex: 5, stepUpdates: [{ id: "4", status: "completed" }, { id: "5", status: "active" }], audioTime: 39, duration: 19 },
   // 58s - Driver acknowledges
-  { messageIndex: 5, statusIndex: 7, stepUpdates: [], audioTime: 58 },
+  { messageIndex: 5, statusIndex: 7, stepUpdates: [{ id: "5", status: "completed" }, { id: "6", status: "active" }], audioTime: 58, duration: 5 },
   // 63s - Amelia offers upsell
-  { messageIndex: 6, statusIndex: 8, stepUpdates: [{ id: "6", status: "completed" }, { id: "7", status: "active" }], audioTime: 63 },
+  { messageIndex: 6, statusIndex: 8, stepUpdates: [{ id: "6", status: "completed" }, { id: "7", status: "active" }], audioTime: 63, duration: 15 },
   // 78s - Driver interested in app
-  { messageIndex: 7, statusIndex: 8, stepUpdates: [{ id: "7", status: "completed" }], audioTime: 78 },
+  { messageIndex: 7, statusIndex: 8, stepUpdates: [{ id: "7", status: "completed" }], audioTime: 78, duration: 8 },
   // 86s - Amelia confirms charger ready
-  { messageIndex: 8, statusIndex: 9, stepUpdates: [{ id: "8", status: "active" }], audioTime: 86 },
+  { messageIndex: 8, statusIndex: 9, stepUpdates: [{ id: "8", status: "active" }], audioTime: 86, duration: 12 },
   // 98s - Driver confirms it worked
-  { messageIndex: 9, statusIndex: 10, stepUpdates: [{ id: "8", status: "completed" }, { id: "9", status: "active" }], audioTime: 98 },
+  { messageIndex: 9, statusIndex: 10, stepUpdates: [{ id: "8", status: "completed" }, { id: "9", status: "active" }], audioTime: 98, duration: 11 },
   // 109s - Amelia confirms session
-  { messageIndex: 10, statusIndex: 10, stepUpdates: [{ id: "9", status: "completed" }], audioTime: 109 },
+  { messageIndex: 10, statusIndex: 10, stepUpdates: [{ id: "9", status: "completed" }], audioTime: 109, duration: 8 },
   // 117s - Driver says goodbye
-  { messageIndex: 11, statusIndex: 11, stepUpdates: [], audioTime: 117 },
+  { messageIndex: 11, statusIndex: 11, stepUpdates: [], audioTime: 117, duration: 6 },
   // 123s - Amelia closing
-  { messageIndex: 12, statusIndex: 11, stepUpdates: [], audioTime: 123 }
+  { messageIndex: 12, statusIndex: 11, stepUpdates: [], audioTime: 123, duration: 7 }
 ];
 
 export type PlayMode = "auto" | "manual";
@@ -151,6 +151,9 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [hasStarted, setHasStarted] = useState(false);
+  const [revealProgress, setRevealProgress] = useState(0); // 0-1 progress for current message reveal
+  const [currentMessageStartTime, setCurrentMessageStartTime] = useState(0);
+  const [currentMessageDuration, setCurrentMessageDuration] = useState(0);
   
   const sequenceIndexRef = useRef(-1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -190,6 +193,11 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     
     setCurrentStatus(STATUS_MESSAGES[action.statusIndex]);
     setIsProcessing(true);
+    
+    // Set timing for progressive reveal
+    setCurrentMessageStartTime(action.audioTime);
+    setCurrentMessageDuration(action.duration || 5);
+    setRevealProgress(0);
 
     // Build messages up to this step
     const messagesUpToStep: Message[] = [];
@@ -239,6 +247,15 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
       // Advance if we're behind
       if (targetIdx > currentIdx) {
         applyStepState(targetIdx);
+      }
+      
+      // Calculate reveal progress for current message
+      if (currentIdx >= 0 && currentIdx < SEQUENCE.length) {
+        const action = SEQUENCE[currentIdx];
+        const elapsed = currentTime - action.audioTime;
+        const duration = action.duration || 5;
+        const progress = Math.min(1, Math.max(0, elapsed / duration));
+        setRevealProgress(progress);
       }
       
       // Check for completion
@@ -325,6 +342,9 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     sequenceIndexRef.current = -1;
     setHasStarted(false);
     setIsPlaying(false);
+    setRevealProgress(0);
+    setCurrentMessageStartTime(0);
+    setCurrentMessageDuration(0);
   }, []);
 
   const switchMode = useCallback((mode: PlayMode) => {
@@ -356,6 +376,7 @@ export const useDemoSequence = (initialMode: PlayMode = "auto") => {
     playMode,
     currentStepIndex,
     totalSteps: SEQUENCE.length,
+    revealProgress,
     reset,
     goToNext,
     goToPrevious,

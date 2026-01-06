@@ -86,6 +86,7 @@ const Index = () => {
     playMode,
     currentStepIndex,
     totalSteps,
+    revealProgress,
     reset,
     goToNext,
     goToPrevious,
@@ -253,6 +254,7 @@ const Index = () => {
                 isFullscreen={isFullscreen} 
                 audioRef={audioRef}
                 isPlaying={isPlaying}
+                revealProgress={revealProgress}
               />
             </motion.div>
           </div>
