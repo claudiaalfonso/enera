@@ -20,12 +20,18 @@ const estimateLines = (text: string, charsPerLine: number = 42): number => {
   return Math.ceil(text.length / charsPerLine);
 };
 
-// Get visible chunks that fit within 4 lines (subtitle swap logic)
-const getDisplayChunks = (chunks: PhraseChunk[], maxLines: number = 4): PhraseChunk[] => {
+// Get visible chunks that fit within maxLines, but always keep at least minChunks
+const getDisplayChunks = (
+  chunks: PhraseChunk[], 
+  maxLines: number = 5, 
+  minChunks: number = 3
+): PhraseChunk[] => {
   if (chunks.length === 0) return [];
   
+  // Always show at least the last minChunks
+  const guaranteedStart = Math.max(0, chunks.length - minChunks);
+  
   // Build text from end, keeping only what fits in maxLines
-  let totalLines = 0;
   let startIndex = chunks.length - 1;
   
   // Work backwards to find what fits
@@ -40,7 +46,10 @@ const getDisplayChunks = (chunks: PhraseChunk[], maxLines: number = 4): PhraseCh
     }
   }
   
-  return chunks.slice(startIndex);
+  // Use the earlier of: line-based start OR guaranteed minimum chunks
+  const finalStart = Math.min(startIndex, guaranteedStart);
+  
+  return chunks.slice(finalStart);
 };
 
 const ConversationPanel = ({ 
