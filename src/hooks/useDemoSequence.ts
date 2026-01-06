@@ -79,9 +79,10 @@ const CUE_SHEET: Cue[] = [
     id: "5", 
     speaker: "amelia", 
     startTime: 39.0, 
-    endTime: 63.0, 
+    endTime: 57.5, 
     chunks: [
       { t: 39.0, text: "Perfect." },
+      { t: 40.78, text: "Let me just look into what's happening there." },
       { t: 43.2, text: "I've just run a diagnostic," },
       { t: 45.0, text: "and it looks like the card reader" },
       { t: 47.0, text: "is frozen," },
@@ -95,26 +96,26 @@ const CUE_SHEET: Cue[] = [
   { 
     id: "6", 
     speaker: "driver", 
-    startTime: 61.5, 
-    endTime: 64.5, 
+    startTime: 57.9, 
+    endTime: 61.5, 
     chunks: [
-      { t: 61.5, text: "Great, okay," },
-      { t: 62.8, text: "I'll hang on." }
+      { t: 57.9, text: "Uh, great, okay," },
+      { t: 59.0, text: "I'll hang on." }
     ]
   },
   { 
     id: "7", 
     speaker: "amelia", 
-    startTime: 64.0, 
+    startTime: 62.0, 
     endTime: 81.0, 
     chunks: [
-      { t: 64.0, text: "While we're waiting for that to cycle," },
-      { t: 67.5, text: "I noticed you're using a guest payment." },
-      { t: 70.0, text: "Did you know that if you used our app," },
-      { t: 72.5, text: "you'd actually get a 35% discount" },
-      { t: 74.8, text: "for charging during this off-peak window?" },
-      { t: 77.5, text: "It's a fair bit cheaper" },
-      { t: 79.0, text: "than the standard contactless rate." }
+      { t: 62.0, text: "While we're waiting for that to cycle," },
+      { t: 64.0, text: "I noticed you're using a guest payment." },
+      { t: 66.8, text: "Did you know that if you used our app," },
+      { t: 69.5, text: "you'd actually get a 35% discount" },
+      { t: 71.0, text: "for charging during this off-peak window?" },
+      { t: 73.9, text: "It's a fair bit cheaper" },
+      { t: 75.0, text: "than the standard contactless rate." }
     ]
   },
   { 
