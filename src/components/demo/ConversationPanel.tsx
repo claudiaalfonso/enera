@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,16 +10,31 @@ interface ConversationPanelProps {
   isFullscreen?: boolean;
   audioRef?: React.RefObject<HTMLAudioElement | null>;
   isPlaying?: boolean;
+  revealProgress?: number;
 }
+
+// Split long text into readable chunks (2-4 lines each)
+const chunkText = (text: string, maxWordsPerChunk: number = 12): string[] => {
+  const words = text.split(" ");
+  if (words.length <= maxWordsPerChunk) return [text];
+  
+  const chunks: string[] = [];
+  for (let i = 0; i < words.length; i += maxWordsPerChunk) {
+    chunks.push(words.slice(i, i + maxWordsPerChunk).join(" "));
+  }
+  return chunks;
+};
 
 const ConversationPanel = ({ 
   messages, 
   isFullscreen = false,
   audioRef,
-  isPlaying = false
+  isPlaying = false,
+  revealProgress = 1
 }: ConversationPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [prevSpeaker, setPrevSpeaker] = useState<string | null>(null);
+  const [speakerChangeKey, setSpeakerChangeKey] = useState(0);
 
   const currentMessage = messages[messages.length - 1];
   const currentSpeaker = currentMessage?.role;
@@ -28,10 +43,11 @@ const ConversationPanel = ({
   const isSpeakerChange = prevSpeaker !== null && prevSpeaker !== currentSpeaker;
   
   useEffect(() => {
-    if (currentSpeaker) {
+    if (currentSpeaker && currentSpeaker !== prevSpeaker) {
       setPrevSpeaker(currentSpeaker);
+      setSpeakerChangeKey(k => k + 1);
     }
-  }, [currentSpeaker]);
+  }, [currentSpeaker, prevSpeaker]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,6 +57,30 @@ const ConversationPanel = ({
       });
     }
   }, [messages]);
+
+  // Calculate revealed text based on progress
+  const revealedContent = useMemo(() => {
+    if (!currentMessage) return { chunks: [], currentChunkIndex: 0, chunkProgress: 0 };
+    
+    const chunks = chunkText(currentMessage.content, 14);
+    const totalChunks = chunks.length;
+    
+    // Calculate which chunk and how much of it to show
+    const exactPosition = revealProgress * totalChunks;
+    const currentChunkIndex = Math.min(Math.floor(exactPosition), totalChunks - 1);
+    const chunkProgress = exactPosition - currentChunkIndex;
+    
+    return { chunks, currentChunkIndex, chunkProgress };
+  }, [currentMessage, revealProgress]);
+
+  // Get words to reveal in current chunk
+  const getRevealedWords = (chunk: string, progress: number): { revealed: string; cursor: boolean } => {
+    const words = chunk.split(" ");
+    const wordsToShow = Math.ceil(progress * words.length);
+    const revealed = words.slice(0, wordsToShow).join(" ");
+    const cursor = progress < 1 && progress > 0;
+    return { revealed, cursor };
+  };
 
   // Animation variants for smooth speaker transitions
   const messageVariants = {
@@ -62,7 +102,25 @@ const ConversationPanel = ({
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden relative">
+      {/* Border pulse effect on speaker change */}
+      <AnimatePresence>
+        {currentMessage && (
+          <motion.div
+            key={`border-pulse-${speakerChangeKey}`}
+            className={cn(
+              "absolute inset-0 rounded-xl pointer-events-none z-10",
+              currentMessage.role === "amelia" 
+                ? "ring-2 ring-enera-brand/40" 
+                : "ring-2 ring-muted-foreground/30"
+            )}
+            initial={{ opacity: 0.8, scale: 1 }}
+            animate={{ opacity: 0, scale: 1.01 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header - Compact */}
       <div className={cn(
         "flex-shrink-0 border-b border-border/20 bg-enera-surface-elevated/20 transition-all",
@@ -130,29 +188,25 @@ const ConversationPanel = ({
           </motion.div>
         ) : (
           <div className="w-full max-w-md relative">
-            {/* Subtle background glow that shifts with speaker */}
+            {/* Enhanced background glow - increased intensity */}
             <AnimatePresence mode="wait">
               {currentMessage && (
                 <motion.div
-                  key={`glow-${currentMessage.role}`}
+                  key={`glow-${currentMessage.role}-${speakerChangeKey}`}
                   className={cn(
-                    "absolute inset-0 -z-10 rounded-2xl blur-3xl opacity-20 pointer-events-none",
+                    "absolute -inset-8 -z-10 rounded-3xl blur-3xl pointer-events-none",
                     currentMessage.role === "amelia" 
                       ? "bg-enera-brand" 
                       : "bg-muted-foreground"
                   )}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.7 }}
                   animate={{ 
-                    opacity: currentMessage.role === "amelia" ? 0.15 : 0.08,
-                    scale: 1 
+                    opacity: currentMessage.role === "amelia" ? 0.25 : 0.15,
+                    scale: 1.1,
+                    x: currentMessage.role === "amelia" ? "15%" : "-15%"
                   }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  style={{
-                    transform: currentMessage.role === "amelia" 
-                      ? "translateX(20%)" 
-                      : "translateX(-20%)",
-                  }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               )}
             </AnimatePresence>
@@ -174,7 +228,7 @@ const ConversationPanel = ({
                   {/* Speaker Label with fade */}
                   <motion.div 
                     className={cn(
-                      "flex items-center gap-1.5 mb-1.5",
+                      "flex items-center gap-1.5 mb-2",
                       currentMessage.role === "amelia" ? "justify-end" : "justify-start"
                     )}
                     initial={{ opacity: 0 }}
@@ -182,7 +236,7 @@ const ConversationPanel = ({
                     transition={{ delay: 0.1, duration: 0.2 }}
                   >
                     <span className={cn(
-                      "text-[9px] uppercase tracking-widest font-semibold transition-colors duration-300",
+                      "text-[10px] uppercase tracking-widest font-semibold transition-colors duration-300",
                       currentMessage.role === "amelia" ? "text-enera-brand" : "text-muted-foreground/60"
                     )}>
                       {currentMessage.role === "amelia" ? "Amelia" : "Driver"}
@@ -194,12 +248,12 @@ const ConversationPanel = ({
                       transition={{ delay: 0.15, duration: 0.2 }}
                     >
                       <span className={cn(
-                        "w-1 h-1 rounded-full animate-pulse",
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
                         currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
                       )} />
                       <span 
                         className={cn(
-                          "w-1 h-1 rounded-full animate-pulse",
+                          "w-1.5 h-1.5 rounded-full animate-pulse",
                           currentMessage.role === "amelia" ? "bg-enera-brand/80" : "bg-muted-foreground/40"
                         )} 
                         style={{ animationDelay: "150ms" }} 
@@ -207,21 +261,52 @@ const ConversationPanel = ({
                     </motion.span>
                   </motion.div>
 
-                  {/* Message Text - NEVER truncate spoken dialogue */}
-                  <motion.p 
-                    className={cn(
-                      "leading-relaxed font-medium",
-                      isFullscreen ? "text-xl" : "text-lg",
-                      currentMessage.role === "amelia" 
-                        ? "text-right text-foreground" 
-                        : "text-left text-foreground/90"
-                    )}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.08, duration: 0.25 }}
-                  >
-                    {currentMessage.content}
-                  </motion.p>
+                  {/* Progressive Text Reveal - Chunked */}
+                  <div className="space-y-2">
+                    {revealedContent.chunks.map((chunk, idx) => {
+                      // Determine visibility and progress for this chunk
+                      const isCompleted = idx < revealedContent.currentChunkIndex;
+                      const isCurrent = idx === revealedContent.currentChunkIndex;
+                      const isHidden = idx > revealedContent.currentChunkIndex;
+                      
+                      if (isHidden) return null;
+                      
+                      const { revealed, cursor } = isCurrent 
+                        ? getRevealedWords(chunk, revealedContent.chunkProgress)
+                        : { revealed: chunk, cursor: false };
+                      
+                      if (!revealed && isCurrent) return null;
+                      
+                      return (
+                        <motion.p 
+                          key={`chunk-${idx}`}
+                          className={cn(
+                            "leading-relaxed font-medium transition-opacity duration-200",
+                            isFullscreen ? "text-xl" : "text-lg",
+                            currentMessage.role === "amelia" 
+                              ? "text-right text-foreground" 
+                              : "text-left text-foreground/90",
+                            isCompleted && "opacity-60"
+                          )}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: isCompleted ? 0.6 : 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.3 }}
+                        >
+                          {revealed}
+                          {cursor && (
+                            <motion.span
+                              className={cn(
+                                "inline-block w-0.5 h-5 ml-0.5 align-middle rounded-full",
+                                currentMessage.role === "amelia" ? "bg-enera-brand" : "bg-muted-foreground"
+                              )}
+                              animate={{ opacity: [1, 0.3, 1] }}
+                              transition={{ duration: 0.8, repeat: Infinity }}
+                            />
+                          )}
+                        </motion.p>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
