@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Volume2, VolumeX, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlayMode } from "@/hooks/useDemoSequence";
@@ -12,12 +12,14 @@ interface PresentationControlsProps {
   totalSteps: number;
   isFullscreen: boolean;
   isMuted: boolean;
+  isCompact: boolean;
   onTogglePlay: () => void;
   onNext: () => void;
   onPrevious: () => void;
   onSwitchMode: (mode: PlayMode) => void;
   onToggleFullscreen: () => void;
   onToggleMute: () => void;
+  onToggleCompact: () => void;
   onReset: () => void;
 }
 
@@ -35,6 +37,7 @@ const PresentationControls = ({
   onSwitchMode,
   onToggleFullscreen,
   onToggleMute,
+  onToggleCompact,
   onReset
 }: PresentationControlsProps) => {
   const progress = Math.max(0, ((currentStep + 1) / totalSteps) * 100);
@@ -146,12 +149,23 @@ const PresentationControls = ({
             size="sm"
             onClick={onToggleFullscreen}
             className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            title="Toggle fullscreen (F)"
           >
             {isFullscreen ? (
               <Minimize2 className="h-4 w-4" />
             ) : (
               <Maximize2 className="h-4 w-4" />
             )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCompact}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            title="Hide controls (C)"
+          >
+            <EyeOff className="h-4 w-4" />
           </Button>
         </div>
       </div>

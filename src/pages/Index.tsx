@@ -94,6 +94,12 @@ const Index = () => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+
+  // Handle compact mode toggle
+  const toggleCompact = useCallback(() => {
+    setIsCompact(prev => !prev);
+  }, []);
 
   // Handle demo start
   const handleStartDemo = useCallback(() => {
@@ -155,6 +161,8 @@ const Index = () => {
         toggleFullscreen();
       } else if (e.key === "m") {
         toggleMute();
+      } else if (e.key === "c") {
+        toggleCompact();
       } else if (e.key === "r") {
         reset();
       }
@@ -162,7 +170,7 @@ const Index = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showWelcome, handleStartDemo, togglePlayPause, goToNext, goToPrevious, toggleFullscreen, toggleMute, reset]);
+  }, [showWelcome, handleStartDemo, togglePlayPause, goToNext, goToPrevious, toggleFullscreen, toggleMute, toggleCompact, reset]);
 
   return (
     <div className={cn(
@@ -193,7 +201,7 @@ const Index = () => {
         </motion.div>
 
         {/* Main Content */}
-        <main className="flex-1 flex min-h-0 pb-14">
+        <main className={cn("flex-1 flex min-h-0", !isCompact && "pb-14")}>
           {/* Left Panel - System View (60%) */}
           <motion.div
             className={cn(
@@ -224,24 +232,35 @@ const Index = () => {
         </main>
 
         {/* Presentation Controls */}
-        <motion.div variants={controlsVariants}>
-          <PresentationControls
-            isPlaying={isPlaying}
-            isComplete={isComplete}
-            playMode={playMode}
-            currentStep={currentStepIndex}
-            totalSteps={totalSteps}
-            isFullscreen={isFullscreen}
-            isMuted={isMuted}
-            onTogglePlay={togglePlayPause}
-            onNext={goToNext}
-            onPrevious={goToPrevious}
-            onSwitchMode={switchMode}
-            onToggleFullscreen={toggleFullscreen}
-            onToggleMute={toggleMute}
-            onReset={reset}
-          />
-        </motion.div>
+        <AnimatePresence>
+          {!isCompact && (
+            <motion.div
+              variants={controlsVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
+            >
+              <PresentationControls
+                isPlaying={isPlaying}
+                isComplete={isComplete}
+                playMode={playMode}
+                currentStep={currentStepIndex}
+                totalSteps={totalSteps}
+                isFullscreen={isFullscreen}
+                isMuted={isMuted}
+                isCompact={isCompact}
+                onTogglePlay={togglePlayPause}
+                onNext={goToNext}
+                onPrevious={goToPrevious}
+                onSwitchMode={switchMode}
+                onToggleFullscreen={toggleFullscreen}
+                onToggleMute={toggleMute}
+                onToggleCompact={toggleCompact}
+                onReset={reset}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
