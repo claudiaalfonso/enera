@@ -71,7 +71,7 @@ const CUE_SHEET: Cue[] = [
     startTime: 34.8, 
     endTime: 38.3, 
     chunks: [
-      { t: 34.8, text: "Yeah, that's the one." },
+      { t: 34.8, text: "Uh, yeah, that's the one." },
       { t: 36.3, text: "MH-102-B." }
     ]
   },
